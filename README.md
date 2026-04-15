@@ -1,13 +1,13 @@
-# Advanced Analytics Insight Hub
+# Data Science Applications Hub
 
-**Advanced Analytics Insight Hub** is a local-only multi-function analysis tool with:
+**Data Science Applications Hub** is a local-only multi-function analysis tool with:
 - A FastAPI backend for schema inference, saved-config workflows, A/E computation, and diagnostics
 - A Quasar (Vue 3 + TypeScript) frontend for a central setup experience and module-specific analysis pages
 - DuckDB-powered diagnostic insights for fast ranked segment discovery
 
 ## Project Overview
 
-Advanced Analytics Insight Hub supports local analysis of mortality datasets in CSV, Excel, and Parquet format. Phase 1 includes the **Experience Study Mortality A/E** module with:
+Data Science Applications Hub supports local analysis of mortality datasets in CSV, Excel, and Parquet format. Phase 1 includes the **Experience Study Mortality A/E** module with:
 - Univariate A/E analysis with numeric, date, and categorical variables
 - Optional split overlays, exclusions, polynomial fit, treemap, and tabular views
 - Cause-of-death breakdowns

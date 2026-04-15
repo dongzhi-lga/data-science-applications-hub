@@ -4,7 +4,7 @@
             <q-toolbar>
                 <q-btn dense flat icon="menu" @click="toggleDrawer" />
                 <q-toolbar-title class="text-weight-medium">
-                    Advanced Analytics Insight Hub
+                    Data Science Applications Hub
                 </q-toolbar-title>
                 <q-btn
                     flat

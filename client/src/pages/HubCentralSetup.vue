@@ -3,7 +3,7 @@
         <div class="main-container">
             <q-banner class="q-px-md q-pt-md q-pb-sm">
                 <div class="row items-center q-gutter-x-sm">
-                    <span class="text-h4">Advanced Analytics Insight Hub</span>
+                    <span class="text-h4">Data Science Applications Hub</span>
                 </div>
                 <div class="text-body2 text-grey-7 q-mt-xs">
                     Select an analysis module, upload a dataset, configure module-specific
@@ -501,4 +501,3 @@ onMounted(() => {
     width: 400px;
 }
 </style>
-

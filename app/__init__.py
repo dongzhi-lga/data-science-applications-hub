@@ -26,7 +26,7 @@ async def lifespan(app: FastAPI):
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(title="Advanced Analytics Insight Hub", lifespan=lifespan)
+    app = FastAPI(title="Data Science Applications Hub", lifespan=lifespan)
 
     app.add_middleware(
         CORSMiddleware,
