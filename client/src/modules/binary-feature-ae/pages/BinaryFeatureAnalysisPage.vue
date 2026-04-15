@@ -213,14 +213,6 @@
                         </q-card-section>
                     </q-card>
 
-                    <div class="q-mt-md">
-                        <BinaryFeatureDetailCards
-                            :rows="rows"
-                            :focused-row-id="focusedRowId"
-                            :ci-level="ciLevel"
-                            :show-summary="false"
-                        />
-                    </div>
                 </div>
                 <div class="col-12 col-lg-4">
                     <BinaryFeatureDetailCards
@@ -283,6 +275,15 @@
                         </q-card-section>
                     </q-card>
                 </div>
+            </div>
+
+            <div class="q-mt-md">
+                <BinaryFeatureDetailCards
+                    :rows="rows"
+                    :focused-row-id="focusedRowId"
+                    :ci-level="ciLevel"
+                    :show-summary="false"
+                />
             </div>
 
             <q-card flat bordered class="q-mt-md">
