@@ -45,12 +45,13 @@ export async function getJson<T>(path: string): Promise<T> {
     return (await (await fetchApi(path)).json()) as T;
 }
 
-export async function postJson<T>(path: string, body: unknown): Promise<T> {
+export async function postJson<T>(path: string, body: unknown, signal?: AbortSignal): Promise<T> {
     return (await (
         await fetchApi(path, {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify(body),
+            signal,
         })
     ).json()) as T;
 }

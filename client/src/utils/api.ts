@@ -161,9 +161,11 @@ export async function getDatasetConfigFile(configId: string): Promise<File> {
 
 export async function postBinaryFeatureCalculate(
     params: ApiBinaryFeatureCalculateRequest,
+    signal?: AbortSignal,
 ): Promise<ApiBinaryFeatureCalculateResponse> {
     return postJson<ApiBinaryFeatureCalculateResponse>(
         '/api/binary-feature-ae/calculate',
         params,
+        signal,
     );
 }

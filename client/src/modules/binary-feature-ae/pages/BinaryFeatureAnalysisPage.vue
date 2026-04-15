@@ -350,7 +350,7 @@ const focusedRowId = ref<string | null>(null);
 const pinnedRules = ref<BinaryFeaturePinnedRule[]>([]);
 
 const activeConfig = ref<ApiDatasetConfig | null>(null);
-let requestSerial = 0;
+let abortController: AbortController | null = null;
 
 const configId = computed(() => {
     const raw = route.query.config;
@@ -466,33 +466,35 @@ async function loadData() {
         return;
     }
 
-    const currentRequest = ++requestSerial;
+    abortController?.abort();
+    abortController = new AbortController();
+    const signal = abortController.signal;
+
     loading.value = true;
     errorMsg.value = null;
 
     try {
-        const result = await postBinaryFeatureCalculate({
-            config_id: configId.value,
-            ci_level: ciLevel.value,
-            categories: categories.value,
-            significance_values: significanceValues.value,
-            search_text: debouncedSearchText.value || null,
-            min_hit_count: debouncedMinHitCount.value,
-            min_claim_count: debouncedMinClaimCount.value,
-        });
-
-        if (currentRequest !== requestSerial) {
-            return;
-        }
+        const result = await postBinaryFeatureCalculate(
+            {
+                config_id: configId.value,
+                ci_level: ciLevel.value,
+                categories: categories.value,
+                significance_values: significanceValues.value,
+                search_text: debouncedSearchText.value || null,
+                min_hit_count: debouncedMinHitCount.value,
+                min_claim_count: debouncedMinClaimCount.value,
+            },
+            signal,
+        );
 
         responseData.value = result;
     } catch (err) {
-        if (currentRequest !== requestSerial) {
+        if (signal.aborted) {
             return;
         }
         errorMsg.value = err instanceof Error ? err.message : String(err);
     } finally {
-        if (currentRequest === requestSerial) {
+        if (!signal.aborted) {
             loading.value = false;
         }
     }
@@ -603,11 +605,15 @@ onMounted(() => {
         errorMsg.value = null;
     }
 });
+
+onBeforeUnmount(() => {
+    abortController?.abort();
+});
 </script>
 
 <style scoped>
 .page-shell {
-    max-width: 1600px;
+    max-width: 100%;
 }
 
 .kpi-grid {
