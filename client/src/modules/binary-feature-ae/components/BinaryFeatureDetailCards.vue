@@ -1,6 +1,6 @@
 <template>
     <div class="column q-gutter-md">
-        <q-card flat bordered>
+        <q-card v-if="props.showSummary" flat bordered>
             <q-card-section v-if="focusedRow">
                 <div class="text-h6">{{ focusedRow.rule }}</div>
                 <div class="text-body1 text-grey-8 q-mt-xs">
@@ -65,7 +65,7 @@
             </q-card-section>
         </q-card>
 
-        <div class="row q-col-gutter-md">
+        <div v-if="props.showCharts" class="row q-col-gutter-md">
             <div class="col-12 col-md-6">
                 <q-card flat bordered>
                     <q-card-section>
@@ -96,11 +96,16 @@ import {
 
 import { COLA_DEFINITIONS } from '@/modules/binary-feature-ae/constants';
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
     rows: ApiBinaryFeatureRow[];
     focusedRowId: string | null;
     ciLevel: '95' | '90' | '80';
-}>();
+    showSummary?: boolean;
+    showCharts?: boolean;
+}>(), {
+    showSummary: true,
+    showCharts: true,
+});
 
 const ciChartEl = ref<HTMLDivElement | null>(null);
 const mixChartEl = ref<HTMLDivElement | null>(null);
