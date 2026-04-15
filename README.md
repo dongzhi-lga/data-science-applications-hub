@@ -1,220 +1,350 @@
 # Data Science Applications Hub
 
-**Data Science Applications Hub** is a local-only multi-function analysis tool with:
-- A FastAPI backend for schema inference, saved-config workflows, A/E computation, and diagnostics
-- A Quasar (Vue 3 + TypeScript) frontend for a central setup experience and module-specific analysis pages
-- DuckDB-powered diagnostic insights for fast ranked segment discovery
+Data Science Applications Hub is the data science team's shared application hub.
+Instead of maintaining separate single-purpose tools, this repository hosts
+multiple analysis workflows behind one frontend, one backend, and one shared
+configuration/storage model.
 
-## Project Overview
+The project is intentionally hub-first:
 
-Data Science Applications Hub supports local analysis of mortality datasets in CSV, Excel, and Parquet format. Phase 1 includes the **Experience Study Mortality A/E** module with:
-- Univariate A/E analysis with numeric, date, and categorical variables
-- Optional split overlays, exclusions, polynomial fit, treemap, and tabular views
-- Cause-of-death breakdowns
-- Saved dataset configurations with reusable column mappings
-- Diagnostic insights that automatically rank high-variance 1D and 2D segments and let you drill back into the existing A/E workflow
+- users start from a single **Central Setup** page
+- datasets are uploaded once and saved as reusable configurations
+- each saved configuration opens the correct analysis page
+- new applications can plug into the same pattern as the hub grows
 
-The main user flow is now hub-backed:
-1. Open the **Central Setup** page.
-2. Select the **Experience Study Mortality A/E** module.
-3. Upload a dataset and save a dataset configuration with its column mapping.
-4. Open the saved configuration in the module analysis page.
-5. Run univariate A/E directly from the stored backend file.
-6. Review the `Diagnostic insights` panel.
-7. Click `Drill` on an insight to apply the suggested `x` and optional `split`, then rerun analysis.
+Today the hub has **2 active applications**:
 
-**Architecture**
-- **Backend:** Python 3.13, FastAPI, Pandas, DuckDB, Pydantic, Uvicorn
-- **Frontend:** Vue 3, Quasar, TypeScript, Plotly.js
+1. **Experience Study Mortality A/E**
+2. **Binary Feature Mortality A/E**
 
----
+The codebase is already structured for more modules to be added through the
+shared registry, routing, and dataset-config workflow.
 
-## Backend
+## What The Hub Does
+
+### Central Setup
+
+Route: `/`
+
+This is the landing page for the whole system. It lets users:
+
+- choose an active analysis module
+- upload a CSV, Excel, or Parquet file
+- infer a generic schema
+- complete module-specific field mapping
+- save a reusable dataset configuration
+- reopen saved configurations directly into the correct analysis page
+
+All saved configs are backed by local file storage under `.insight-hub/`.
+
+### Experience Study Mortality A/E
+
+Route: `/mortality-ae/analysis`
+
+This is the main exploratory mortality analysis workflow in the hub. It is
+config-backed: users select a saved mortality dataset configuration and then run
+analysis against the stored file and mappings.
+
+Current capabilities include:
+
+- numeric, date, categorical, and composite `A x B` x-axis variables
+- optional split variable with the same variable types
+- uniform, quintile, and custom binning
+- custom categorical grouping and explicit group positioning
+- count-based and amount-based A/E outputs
+- 95% confidence intervals
+- optional polynomial best-fit overlays
+- scatter plots, treemaps, and tabular outputs
+- cause-of-death claim summaries and stacked bar visuals
+- DuckDB-ranked diagnostic insights across 1D and 2D segments
+- one-click drill from an insight back into the mortality controls
+
+### Binary Feature Mortality A/E
+
+Route: `/binary-feature-ae/analysis`
+
+This module is built for triaging pre-aggregated rule or binary-feature output.
+It expects a saved configuration with a mapped ruleset-style dataset, then
+provides an interactive review surface for candidate rules.
+
+Current capabilities include:
+
+- config-driven mapping for rule, hit, claim, A/E, CI, and COLA columns
+- category, significance, search, minimum hit count, and minimum claim count filters
+- 95%, 90%, and 80% confidence interval views
+- KPI summary cards
+- scatter plot for rule triage
+- focused detail cards for the selected rule
+- compare charts for selected rules
+- tabular compare/triage grid
+- pinning workflow for follow-up candidates
+
+### Legacy / Compatibility Surface
+
+The repo still contains older monitoring support:
+
+- frontend route `/monitor` redirects to the mortality A/E page
+- backend endpoints under `/api/monitor/*` still exist for legacy mortality
+  time-series monitoring workflows
+
+## Typical User Flow
+
+1. Open **Central Setup**.
+2. Select the module you want to use.
+3. Upload a dataset file.
+4. Load schema and complete the module-specific mapping.
+5. Save the configuration.
+6. Open the saved configuration from the hub table.
+7. Run the module workflow against the saved file.
+
+For the mortality module, diagnostic insights are automatically loaded from the
+saved configuration and can be drilled back into the main analysis controls.
+
+## Architecture
+
+### Stack
+
+- Backend: FastAPI, Pydantic, Pandas, DuckDB, NumPy, SciPy, Uvicorn
+- Frontend: Vue 3, Quasar, TypeScript, Vite, Plotly
+- Storage: local filesystem-backed config and dataset storage
+
+### Repository Layout
+
+- `app/`
+  FastAPI app, routers, services, models, and calculation logic
+- `app/modules/mortality_ae/`
+  Mortality A/E API routing
+- `app/modules/binary_feature_ae/`
+  Binary Feature Mortality A/E API routing and service logic
+- `client/`
+  Vue/Quasar frontend, hub pages, module pages, and shared registry
+- `client/src/core/registry.ts`
+  Active module registration for the frontend hub
+- `scripts/local_start.sh`
+  backend dev startup script
+- `tests/`
+  backend unit and integration tests
+
+### Shared Hub Design
+
+The hub works because both active applications share the same core patterns:
+
+- a common landing/setup page
+- module registration in the frontend registry
+- reusable saved dataset configurations
+- shared local file storage
+- module-specific backend routes layered on top of shared storage/services
+
+That is the main reason this repo can grow into a broader applications hub
+instead of staying a single analysis tool.
+
+## Data And Storage
+
+### Supported File Formats
+
+The hub supports:
+
+- `.csv`
+- `.xlsx`
+- `.xls`
+- `.parquet`
+
+Format is detected automatically from the filename extension.
+
+### Data Sources
+
+The backend supports two main dataset patterns:
+
+- **root dataset directory**
+  files discovered through `/api/datasets`
+- **saved hub configurations**
+  uploaded files copied into hub-managed storage and reopened through
+  `/api/dataset-configs`
+
+The current frontend flow is centered on saved configurations.
+
+### Storage Layout
+
+By default, hub-managed storage is created in:
+
+```text
+.insight-hub/
+  dataset_configs.json
+  files/
+    <config_id>/
+      <uploaded file>
+```
+
+Saved files persist across backend restarts.
+
+### Legacy Migration
+
+Older `.aemonitor/` storage is still recognized and migrated to
+`.insight-hub/` on startup. Legacy `AEMONITOR_*` environment variables are also
+still accepted during the migration window.
+
+## Environment Variables
+
+The most useful runtime settings are:
+
+- `INSIGHT_HUB_DATA_DIR`
+  override the root directory used for dataset discovery and hub storage
+- `INSIGHT_HUB_APPLICATION_ID_COLUMN`
+  force the application/policy id column for mortality workflows
+- `INSIGHT_HUB_MAX_UNIQUE_VALUES`
+  cap categorical values returned to the UI
+- `INSIGHT_HUB_MAX_INSIGHT_DIMENSIONS`
+  cap the number of candidate dimensions considered by diagnostic insights
+- `INSIGHT_HUB_MAX_COLA_M1_CAUSES`
+  cap displayed cause-of-death buckets
+- `INSIGHT_HUB_MAX_SPLIT_GROUPS`
+  cap the number of split groups allowed in mortality analysis
+
+Legacy aliases with the `AEMONITOR_` prefix still work.
+
+## Local Development
 
 ### Requirements
 
-- Python 3.13
+- Python `3.13`
 - [`uv`](https://github.com/astral-sh/uv)
+- Node.js `20+`
 
-### Installation & Run
+### Backend
+
+Install dependencies:
 
 ```bash
 uv sync
+```
+
+Start the API server:
+
+```bash
 ./scripts/local_start.sh
 ```
 
-Verify the backend at [http://localhost:8000/api/health](http://localhost:8000/api/health).
+Backend health check:
 
-### Supported Datasets & File Formats
+- [http://localhost:8000/api/health](http://localhost:8000/api/health)
 
-- CSV (`.csv`)
-- Excel (`.xlsx`, `.xls`)
-- Parquet (`.parquet`)
-- File type is auto-detected by extension.
-- By default, datasets can live in the project root. Set `INSIGHT_HUB_DATA_DIR` to override that directory.
-- Saved dataset configs and their uploaded files are stored under `.insight-hub/` and persist across backend restarts.
+### Frontend
 
-### Data Expectations
-
-- **Time-series monitoring** expects a date column and a numeric value column.
-- **A/E analysis** uses saved or uploaded column mappings for fields such as policy number, `MAC`, `MEC`, `MAN`, `MEN`, optional `MOC`, COLA fields, and face amount where applicable.
-
----
-
-## API Endpoints
-
-### Dataset Management
-
-- `GET /api/datasets` — List available datasets from the configured data directory
-- `GET /api/datasets/{dataset_name}/schema` — Infer dataset schema
-- `GET /api/datasets/{dataset_name}/cola` — Run cause-of-death analysis
-
-### Saved Dataset Configurations
-
-- `GET /api/dataset-configs` — List saved dataset configurations
-- `POST /api/dataset-configs` — Create a saved dataset configuration with uploaded file and column mapping
-- `GET /api/dataset-configs/{config_id}` — Fetch a saved dataset configuration
-- `GET /api/dataset-configs/{config_id}/schema` — Infer schema from the stored file behind a saved config
-- `GET /api/dataset-configs/{config_id}/file` — Download the stored file for a saved config
-- `DELETE /api/dataset-configs/{config_id}` — Delete a saved config and its stored file
-
-### Core Schema Profiling
-
-- `POST /api/core/upload-schema` — Infer generic schema metadata for the central setup page
-
-### Monitor Endpoints (Legacy/Internal)
-
-- `POST /api/monitor/from-dataset` — Run time-series monitoring from a named dataset
-- `POST /api/monitor/from-csv` — Run time-series monitoring from an uploaded file
-
-Example:
-
-```bash
-curl -sS -X POST http://localhost:8000/api/monitor/from-dataset \
-  -H 'content-type: application/json' \
-  -d '{"dataset_name":"dataset.csv","date_column":"date","value_column":"deaths"}'
-```
-
-### A/E Analysis Endpoints
-
-- `POST /api/ae/univariate` — Run univariate A/E from a named dataset
-- `POST /api/ae/univariate-from-config` — Run univariate A/E from a saved dataset configuration
-- `POST /api/ae/univariate-from-csv` — Run univariate A/E from an uploaded file
-- `POST /api/ae/upload-schema` — Infer schema from an uploaded file
-- `POST /api/ae/variable-labels` — Get available variable labels
-- `POST /api/ae/insights/from-config` — Run DuckDB-backed diagnostic insight discovery from a saved dataset configuration
-
-Example univariate payload:
-
-```json
-{
-  "dataset_name": "dataset.csv",
-  "x_variable": {
-    "kind": "numeric",
-    "name": "age",
-    "binning": "quintile",
-    "bin_count": 5
-  },
-  "split_variable": null,
-  "column_mapping": {
-    "policy_number_column": "policy_id",
-    "mac_column": "mac",
-    "mec_column": "mec",
-    "man_column": "man",
-    "men_column": "men"
-  }
-}
-```
-
-Example diagnostic insight request:
-
-```json
-{
-  "config_id": "your-config-id",
-  "max_results_per_metric": 25
-}
-```
-
-Diagnostic insight responses include:
-- `count_insights`
-- `amount_insights`
-- Per-insight metrics for sample size, actual, expected, variance, and A/E
-- A drill payload that maps directly into the univariate A/E controls
-
----
-
-## Frontend
-
-### Requirements
-
-- Node.js 20+
-
-### Installation & Run
+Install dependencies:
 
 ```bash
 cd client
 npm install
+```
+
+Start the frontend:
+
+```bash
+cd client
 npm run dev
 ```
 
-Open [http://localhost:9200](http://localhost:9200).
+Open:
 
-Phase 1 routes:
-- `/` — Central Setup
-- `/mortality-ae/analysis` — Experience Study Mortality A/E analysis page
-- `/monitor` — Legacy compatibility redirect to the mortality analysis page
+- [http://localhost:9200](http://localhost:9200)
 
-### Features
+The frontend is configured to call the backend at `http://localhost:8000`.
 
-- **Data Upload & Configuration**
-  - Use the central setup page to upload CSV, Excel, or Parquet files
-  - Infer a generic schema first, then apply module-specific setup
-  - Save reusable dataset configurations with mortality column mappings
-- **Univariate A/E Analysis**
-  - Numeric, date, and categorical `x` variables
-  - Uniform, quintile, or custom numeric binning
-  - Optional split overlays
-  - Categorical grouping and exclusions
-  - Polynomial fit options
-- **Visualizations**
-  - Interactive A/E scatter plot
-  - Treemap for count and amount distribution
-  - Tabular A/E results
-  - COLA stacked bars
-- **Diagnostic Insights**
-  - Auto-load for saved dataset configurations
-  - DuckDB-ranked 1D and 2D segments
-  - Separate `Count` and `Amount` tabs
-  - Collapsible and expandable `Diagnostic insights` panel
-  - One-click drill into the existing univariate A/E workflow
+## API Overview
 
----
+### Shared Endpoints
 
-## Development & Testing
+- `GET /api/health`
+- `POST /api/core/upload-schema`
+- `GET /api/datasets`
+- `GET /api/datasets/{dataset_name}/schema`
+- `GET /api/datasets/{dataset_name}/cola`
+- `GET /api/dataset-configs`
+- `POST /api/dataset-configs`
+- `GET /api/dataset-configs/{config_id}`
+- `GET /api/dataset-configs/{config_id}/schema`
+- `GET /api/dataset-configs/{config_id}/file`
+- `DELETE /api/dataset-configs/{config_id}`
 
-- **Backend**
-  - Install dependencies: `uv sync`
-  - Run tests: `UV_CACHE_DIR=.uv-cache PYTHONPATH=. uv run pytest`
-- **Frontend**
-  - Install dependencies: `cd client && npm install`
-  - Run dev server: `cd client && npm run dev`
-  - Run typecheck: `cd client && npm run typecheck`
-  - Linting and formatting are configured in `client/package.json`
+### Mortality A/E Endpoints
 
-### Developer Note
+- `POST /api/ae/univariate`
+- `POST /api/ae/univariate-from-config`
+- `POST /api/ae/univariate-from-csv`
+- `POST /api/ae/upload-schema`
+- `POST /api/ae/variable-labels`
+- `POST /api/ae/insights/from-config`
 
-Phase 2 makes `.insight-hub/` and `INSIGHT_HUB_*` the canonical storage names.
-Legacy `.aemonitor/` storage and `AEMONITOR_*` environment variables are still
-accepted temporarily for backward compatibility during the migration window.
+### Binary Feature Endpoints
 
----
+- `POST /api/binary-feature-ae/calculate`
 
-## File Format Support
+### Legacy Monitor Endpoints
 
-All major workflows support CSV, Excel, and Parquet files. See `FILE_FORMAT_SUPPORT.md` for details.
+- `POST /api/monitor/from-dataset`
+- `POST /api/monitor/from-csv`
 
----
+## Module-Specific Data Expectations
 
-## License
+### Mortality A/E
 
-MIT License. See `LICENSE` file.
+The mortality workflow expects actual and expected metrics, typically including:
+
+- `MAC`
+- `MEC`
+- `MAN`
+- `MEN`
+
+Optional mappings include:
+
+- policy/application id
+- face amount
+- `MOC`
+- `COLA_M1`
+
+### Binary Feature Mortality A/E
+
+The binary feature workflow expects a pre-aggregated ruleset-style table with:
+
+- rule identifiers and labels
+- first-date and category fields
+- hit and claim metrics
+- A/E ratio
+- 95%, 90%, and 80% confidence interval columns
+- COLA percentage columns
+
+## Testing
+
+Backend tests:
+
+```bash
+UV_CACHE_DIR=.uv-cache PYTHONPATH=. uv run pytest
+```
+
+Frontend type-check:
+
+```bash
+cd client
+npm run typecheck
+```
+
+Optional frontend production build:
+
+```bash
+cd client
+npm run build
+```
+
+## Notes For Future Modules
+
+If you add another application to the hub, the current codebase already gives
+you the main extension points:
+
+- add a new module definition in `client/src/core/registry.ts`
+- add a new module analysis page and setup component in `client/src/modules/`
+- add backend routes and services under `app/modules/`
+- reuse the shared dataset-config and storage flow whenever possible
+
+That is the core purpose of this repository: a single applications hub for the
+data science team, with multiple focused web applications living behind a shared
+platform.
