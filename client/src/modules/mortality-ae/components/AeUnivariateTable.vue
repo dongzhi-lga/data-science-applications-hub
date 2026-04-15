@@ -63,7 +63,7 @@
 <script setup lang="ts">
 import type { QTableColumn } from 'quasar';
 
-import type { ApiAeUnivariateRow } from '@/types/ae';
+import type { ApiAeUnivariateRow } from '@/modules/mortality-ae/types';
 import { formatDateTimeSeconds, formatNumericForVariable } from '@/utils/format';
 
 const props = defineProps<{

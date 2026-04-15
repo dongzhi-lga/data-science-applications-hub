@@ -65,7 +65,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { QTableColumn } from 'quasar';
-import type { ApiAeColaM1StackedResults } from '@/types/ae';
+import type { ApiAeColaM1StackedResults } from '@/modules/mortality-ae/types';
 
 const props = defineProps<{
     data: ApiAeColaM1StackedResults;

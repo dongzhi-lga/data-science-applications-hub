@@ -1,8 +1,56 @@
 <template>
-    <MonitorPageImpl />
+    <q-page class="q-pa-md">
+        <div class="main-container">
+            <MortalityAeInputPanel
+                :model="inputModel"
+                :handlers="analysis.inputHandlers"
+            />
+            <MortalityAeResultsPanel
+                v-if="resultsModel.aeResults"
+                :model="resultsModel"
+            />
+        </div>
+    </q-page>
 </template>
 
 <script setup lang="ts">
-import MonitorPageImpl from '@/pages/MonitorPage.vue';
+import { proxyRefs } from 'vue';
+import { useRoute } from 'vue-router';
+
+import MortalityAeInputPanel from '@/modules/mortality-ae/components/MortalityAeInputPanel.vue';
+import MortalityAeResultsPanel from '@/modules/mortality-ae/components/MortalityAeResultsPanel.vue';
+import { useMortalityAeAnalysisState } from '@/modules/mortality-ae/composables/useMortalityAeAnalysisState';
+import {
+    type MortalityAeVariableBuilder,
+    useMortalityAeVariableBuilder,
+} from '@/modules/mortality-ae/composables/useMortalityAeVariableBuilder';
+
+const route = useRoute();
+
+let variables: MortalityAeVariableBuilder | null = null;
+
+const analysis = useMortalityAeAnalysisState({
+    route,
+    getVariables: () => variables,
+});
+
+variables = useMortalityAeVariableBuilder({
+    schema: analysis.schema,
+});
+
+const inputModel = proxyRefs({
+    ...analysis.inputBindings,
+    ...variables.inputBindings,
+});
+
+const resultsModel = proxyRefs({
+    ...analysis.resultsBindings,
+});
 </script>
 
+<style scoped>
+.main-container {
+    width: 100%;
+    max-width: 100%;
+}
+</style>

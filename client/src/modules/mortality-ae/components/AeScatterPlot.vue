@@ -64,7 +64,7 @@ import type {
     ApiAePolynomialFitResults,
     ApiAeUnivariateRow,
     ApiAeUnivariateSplitResults,
-} from '@/types/ae';
+} from '@/modules/mortality-ae/types';
 import { formatDateTimeSeconds, formatNumericForVariable } from '@/utils/format';
 
 type XAxisKind = 'numeric' | 'date' | 'categorical';

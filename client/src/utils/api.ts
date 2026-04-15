@@ -3,71 +3,39 @@ import type {
     ApiMonitorFromCsvResults,
     ApiMonitorFromDatasetParameters,
 } from '@/types/monitor';
+import {
+    createSlicedUploadFile,
+    deleteRequest,
+    fetchApi,
+    getJson,
+    postFormData,
+    postJson,
+} from '@/core/http';
 import type {
     ApiDatasetColaResults,
     ApiDatasetSchemaResults,
     ApiListDatasetsResults,
 } from '@/types/datasets';
 import type { ApiCoreDatasetSchemaResults } from '@/core/types/schema';
-import type {
-    ApiAeUnivariateFromConfigParameters,
-    ApiAeUnivariateParameters,
-    ApiAeUnivariateResults,
-    ApiAeVariableLabelsParameters,
-    ApiAeVariableLabelsResults,
-} from '@/types/ae';
-import type { ApiAeInsightsResults } from '@/types/insights';
-
-const API_BASE = 'http://localhost:8000';
 
 export async function getDatasets(): Promise<ApiListDatasetsResults> {
-    const res = await fetch(`${API_BASE}/api/datasets`);
-    if (!res.ok) {
-        throw new Error((await res.text()) || `HTTP ${res.status}`);
-    }
-    return (await res.json()) as ApiListDatasetsResults;
+    return getJson<ApiListDatasetsResults>('/api/datasets');
 }
 
 export async function getDatasetSchema(
     datasetName: string,
 ): Promise<ApiDatasetSchemaResults> {
-    const res = await fetch(
-        `${API_BASE}/api/datasets/${encodeURIComponent(datasetName)}/schema`,
+    return getJson<ApiDatasetSchemaResults>(
+        `/api/datasets/${encodeURIComponent(datasetName)}/schema`,
     );
-    if (!res.ok) {
-        const contentType = res.headers.get('content-type') ?? '';
-        if (contentType.includes('application/json')) {
-            const body = (await res.json()) as { detail?: unknown };
-            throw new Error(
-                typeof body.detail === 'string'
-                    ? body.detail
-                    : `HTTP ${res.status}`,
-            );
-        }
-        throw new Error((await res.text()) || `HTTP ${res.status}`);
-    }
-    return (await res.json()) as ApiDatasetSchemaResults;
 }
 
 export async function getDatasetCola(
     datasetName: string,
 ): Promise<ApiDatasetColaResults> {
-    const res = await fetch(
-        `${API_BASE}/api/datasets/${encodeURIComponent(datasetName)}/cola`,
+    return getJson<ApiDatasetColaResults>(
+        `/api/datasets/${encodeURIComponent(datasetName)}/cola`,
     );
-    if (!res.ok) {
-        const contentType = res.headers.get('content-type') ?? '';
-        if (contentType.includes('application/json')) {
-            const body = (await res.json()) as { detail?: unknown };
-            throw new Error(
-                typeof body.detail === 'string'
-                    ? body.detail
-                    : `HTTP ${res.status}`,
-            );
-        }
-        throw new Error((await res.text()) || `HTTP ${res.status}`);
-    }
-    return (await res.json()) as ApiDatasetColaResults;
 }
 
 export async function postMonitorFromCsv(
@@ -78,205 +46,21 @@ export async function postMonitorFromCsv(
     form.append('file', file);
     form.append('params', JSON.stringify(params ?? {}));
 
-    const res = await fetch(`${API_BASE}/api/monitor/from-csv`, {
-        method: 'POST',
-        body: form,
-    });
-    if (!res.ok) {
-        const contentType = res.headers.get('content-type') ?? '';
-        if (contentType.includes('application/json')) {
-            const body = (await res.json()) as { detail?: unknown };
-            throw new Error(
-                typeof body.detail === 'string'
-                    ? body.detail
-                    : `HTTP ${res.status}`,
-            );
-        }
-        throw new Error((await res.text()) || `HTTP ${res.status}`);
-    }
-    return (await res.json()) as ApiMonitorFromCsvResults;
+    return postFormData<ApiMonitorFromCsvResults>('/api/monitor/from-csv', form);
 }
 
 export async function postMonitorFromDataset(
     params: ApiMonitorFromDatasetParameters,
 ): Promise<ApiMonitorFromCsvResults> {
-    const res = await fetch(`${API_BASE}/api/monitor/from-dataset`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(params),
-    });
-    if (!res.ok) {
-        const contentType = res.headers.get('content-type') ?? '';
-        if (contentType.includes('application/json')) {
-            const body = (await res.json()) as { detail?: unknown };
-            throw new Error(
-                typeof body.detail === 'string'
-                    ? body.detail
-                    : `HTTP ${res.status}`,
-            );
-        }
-        throw new Error((await res.text()) || `HTTP ${res.status}`);
-    }
-    return (await res.json()) as ApiMonitorFromCsvResults;
-}
-
-export async function postAeUnivariate(
-    params: ApiAeUnivariateParameters,
-): Promise<ApiAeUnivariateResults> {
-    const res = await fetch(`${API_BASE}/api/ae/univariate`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(params),
-    });
-    if (!res.ok) {
-        const contentType = res.headers.get('content-type') ?? '';
-        if (contentType.includes('application/json')) {
-            const body = (await res.json()) as { detail?: unknown };
-            throw new Error(
-                typeof body.detail === 'string'
-                    ? body.detail
-                    : `HTTP ${res.status}`,
-            );
-        }
-        throw new Error((await res.text()) || `HTTP ${res.status}`);
-    }
-    return (await res.json()) as ApiAeUnivariateResults;
-}
-
-export async function postAeUnivariateFromConfig(
-    params: ApiAeUnivariateFromConfigParameters,
-): Promise<ApiAeUnivariateResults> {
-    const res = await fetch(`${API_BASE}/api/ae/univariate-from-config`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(params),
-    });
-    if (!res.ok) {
-        const contentType = res.headers.get('content-type') ?? '';
-        if (contentType.includes('application/json')) {
-            const body = (await res.json()) as { detail?: unknown };
-            throw new Error(
-                typeof body.detail === 'string'
-                    ? body.detail
-                    : `HTTP ${res.status}`,
-            );
-        }
-        throw new Error((await res.text()) || `HTTP ${res.status}`);
-    }
-    return (await res.json()) as ApiAeUnivariateResults;
-}
-
-export async function postAeVariableLabels(
-    params: ApiAeVariableLabelsParameters,
-): Promise<ApiAeVariableLabelsResults> {
-    const res = await fetch(`${API_BASE}/api/ae/variable-labels`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(params),
-    });
-    if (!res.ok) {
-        const contentType = res.headers.get('content-type') ?? '';
-        if (contentType.includes('application/json')) {
-            const body = (await res.json()) as { detail?: unknown };
-            throw new Error(
-                typeof body.detail === 'string'
-                    ? body.detail
-                    : `HTTP ${res.status}`,
-            );
-        }
-        throw new Error((await res.text()) || `HTTP ${res.status}`);
-    }
-    return (await res.json()) as ApiAeVariableLabelsResults;
-}
-
-export async function postAeUploadSchema(
-    file: File,
-): Promise<ApiDatasetSchemaResults> {
-    // For schema detection, only upload first 10MB for CSV/Excel to improve performance
-    // Parquet files cannot be sliced because metadata is in the footer at the end
-    const maxBytes = 10 * 1024 * 1024; // 10MB
-    const isParquet = file.name.toLowerCase().endsWith('.parquet');
-    const fileSlice = !isParquet && file.size > maxBytes ? file.slice(0, maxBytes) : file;
-    const slicedFile = fileSlice === file ? file : new File([fileSlice], file.name, { type: file.type });
-    
-    const form = new FormData();
-    form.append('file', slicedFile);
-
-    const res = await fetch(`${API_BASE}/api/ae/upload-schema`, {
-        method: 'POST',
-        body: form,
-    });
-    if (!res.ok) {
-        const contentType = res.headers.get('content-type') ?? '';
-        if (contentType.includes('application/json')) {
-            const body = (await res.json()) as { detail?: unknown };
-            throw new Error(
-                typeof body.detail === 'string'
-                    ? body.detail
-                    : `HTTP ${res.status}`,
-            );
-        }
-        throw new Error((await res.text()) || `HTTP ${res.status}`);
-    }
-    return (await res.json()) as ApiDatasetSchemaResults;
+    return postJson<ApiMonitorFromCsvResults>('/api/monitor/from-dataset', params);
 }
 
 export async function postCoreUploadSchema(
     file: File,
 ): Promise<ApiCoreDatasetSchemaResults> {
-    const maxBytes = 10 * 1024 * 1024;
-    const isParquet = file.name.toLowerCase().endsWith('.parquet');
-    const fileSlice = !isParquet && file.size > maxBytes ? file.slice(0, maxBytes) : file;
-    const slicedFile =
-        fileSlice === file ? file : new File([fileSlice], file.name, { type: file.type });
-
     const form = new FormData();
-    form.append('file', slicedFile);
-
-    const res = await fetch(`${API_BASE}/api/core/upload-schema`, {
-        method: 'POST',
-        body: form,
-    });
-    if (!res.ok) {
-        const contentType = res.headers.get('content-type') ?? '';
-        if (contentType.includes('application/json')) {
-            const body = (await res.json()) as { detail?: unknown };
-            throw new Error(
-                typeof body.detail === 'string'
-                    ? body.detail
-                    : `HTTP ${res.status}`,
-            );
-        }
-        throw new Error((await res.text()) || `HTTP ${res.status}`);
-    }
-    return (await res.json()) as ApiCoreDatasetSchemaResults;
-}
-
-export async function postAeUnivariateFromCsv(
-    file: File,
-    params: ApiAeUnivariateParameters,
-): Promise<ApiAeUnivariateResults> {
-    const form = new FormData();
-    form.append('file', file);
-    form.append('params', JSON.stringify(params));
-
-    const res = await fetch(`${API_BASE}/api/ae/univariate-from-csv`, {
-        method: 'POST',
-        body: form,
-    });
-    if (!res.ok) {
-        const contentType = res.headers.get('content-type') ?? '';
-        if (contentType.includes('application/json')) {
-            const body = (await res.json()) as { detail?: unknown };
-            throw new Error(
-                typeof body.detail === 'string'
-                    ? body.detail
-                    : `HTTP ${res.status}`,
-            );
-        }
-        throw new Error((await res.text()) || `HTTP ${res.status}`);
-    }
-    return (await res.json()) as ApiAeUnivariateResults;
+    form.append('file', createSlicedUploadFile(file));
+    return postFormData<ApiCoreDatasetSchemaResults>('/api/core/upload-schema', form);
 }
 
 // Dataset Config API
@@ -291,11 +75,7 @@ import type {
 } from '@/types/binary-feature-ae';
 
 export async function getDatasetConfigs(): Promise<ApiListDatasetConfigsResults> {
-    const res = await fetch(`${API_BASE}/api/dataset-configs`);
-    if (!res.ok) {
-        throw new Error((await res.text()) || `HTTP ${res.status}`);
-    }
-    return (await res.json()) as ApiListDatasetConfigsResults;
+    return getJson<ApiListDatasetConfigsResults>('/api/dataset-configs');
 }
 
 export async function createDatasetConfig(
@@ -308,60 +88,26 @@ export async function createDatasetConfig(
     formData.append('module_id', request.module_id);
     formData.append('module_config_json', JSON.stringify(request.module_config));
     formData.append('file', file);
-    
-    const res = await fetch(`${API_BASE}/api/dataset-configs`, {
-        method: 'POST',
-        body: formData,
-    });
-    if (!res.ok) {
-        const contentType = res.headers.get('content-type') ?? '';
-        if (contentType.includes('application/json')) {
-            const body = (await res.json()) as { detail?: unknown };
-            throw new Error(
-                typeof body.detail === 'string' ? body.detail : `HTTP ${res.status}`,
-            );
-        }
-        throw new Error((await res.text()) || `HTTP ${res.status}`);
-    }
-    return (await res.json()) as ApiDatasetConfig;
+
+    return postFormData<ApiDatasetConfig>('/api/dataset-configs', formData);
 }
 
 export async function getDatasetConfig(configId: string): Promise<ApiDatasetConfig> {
-    const res = await fetch(`${API_BASE}/api/dataset-configs/${encodeURIComponent(configId)}`);
-    if (!res.ok) {
-        throw new Error((await res.text()) || `HTTP ${res.status}`);
-    }
-    return (await res.json()) as ApiDatasetConfig;
+    return getJson<ApiDatasetConfig>(
+        `/api/dataset-configs/${encodeURIComponent(configId)}`,
+    );
 }
 
 export async function getDatasetConfigSchema(
     configId: string,
 ): Promise<ApiDatasetSchemaResults> {
-    const res = await fetch(
-        `${API_BASE}/api/dataset-configs/${encodeURIComponent(configId)}/schema`,
+    return getJson<ApiDatasetSchemaResults>(
+        `/api/dataset-configs/${encodeURIComponent(configId)}/schema`,
     );
-    if (!res.ok) {
-        const contentType = res.headers.get('content-type') ?? '';
-        if (contentType.includes('application/json')) {
-            const body = (await res.json()) as { detail?: unknown };
-            throw new Error(
-                typeof body.detail === 'string'
-                    ? body.detail
-                    : `HTTP ${res.status}`,
-            );
-        }
-        throw new Error((await res.text()) || `HTTP ${res.status}`);
-    }
-    return (await res.json()) as ApiDatasetSchemaResults;
 }
 
 export async function deleteDatasetConfig(configId: string): Promise<void> {
-    const res = await fetch(`${API_BASE}/api/dataset-configs/${encodeURIComponent(configId)}`, {
-        method: 'DELETE',
-    });
-    if (!res.ok) {
-        throw new Error((await res.text()) || `HTTP ${res.status}`);
-    }
+    await deleteRequest(`/api/dataset-configs/${encodeURIComponent(configId)}`);
 }
 
 export async function getDatasetConfigFile(configId: string): Promise<File> {
@@ -369,13 +115,10 @@ export async function getDatasetConfigFile(configId: string): Promise<File> {
     const config = await getDatasetConfig(configId);
     const fallbackFilename = config.file_path;
     
-    const res = await fetch(
-        `${API_BASE}/api/dataset-configs/${encodeURIComponent(configId)}/file`,
+    const res = await fetchApi(
+        `/api/dataset-configs/${encodeURIComponent(configId)}/file`,
     );
-    if (!res.ok) {
-        throw new Error((await res.text()) || `HTTP ${res.status}`);
-    }
-    
+
     const blob = await res.blob();
     const contentDisposition = res.headers.get('content-disposition');
     let filename = fallbackFilename; // Use fallback by default
@@ -416,52 +159,11 @@ export async function getDatasetConfigFile(configId: string): Promise<File> {
     return new File([blob], filename, { type: getMimeType(filename) });
 }
 
-export async function getAeInsightsFromConfig(
-    configId: string,
-    maxResultsPerMetric = 25,
-): Promise<ApiAeInsightsResults> {
-    const res = await fetch(`${API_BASE}/api/ae/insights/from-config`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-            config_id: configId,
-            max_results_per_metric: maxResultsPerMetric,
-        }),
-    });
-    if (!res.ok) {
-        const contentType = res.headers.get('content-type') ?? '';
-        if (contentType.includes('application/json')) {
-            const body = (await res.json()) as { detail?: unknown };
-            throw new Error(
-                typeof body.detail === 'string'
-                    ? body.detail
-                    : `HTTP ${res.status}`,
-            );
-        }
-        throw new Error((await res.text()) || `HTTP ${res.status}`);
-    }
-    return (await res.json()) as ApiAeInsightsResults;
-}
-
 export async function postBinaryFeatureCalculate(
     params: ApiBinaryFeatureCalculateRequest,
 ): Promise<ApiBinaryFeatureCalculateResponse> {
-    const res = await fetch(`${API_BASE}/api/binary-feature-ae/calculate`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(params),
-    });
-    if (!res.ok) {
-        const contentType = res.headers.get('content-type') ?? '';
-        if (contentType.includes('application/json')) {
-            const body = (await res.json()) as { detail?: unknown };
-            throw new Error(
-                typeof body.detail === 'string'
-                    ? body.detail
-                    : `HTTP ${res.status}`,
-            );
-        }
-        throw new Error((await res.text()) || `HTTP ${res.status}`);
-    }
-    return (await res.json()) as ApiBinaryFeatureCalculateResponse;
+    return postJson<ApiBinaryFeatureCalculateResponse>(
+        '/api/binary-feature-ae/calculate',
+        params,
+    );
 }

@@ -23,7 +23,10 @@
 import Plotly from 'plotly.js-dist-min';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
-import type { ApiAeUnivariateRow, ApiAeUnivariateSplitResults } from '@/types/ae';
+import type {
+    ApiAeUnivariateRow,
+    ApiAeUnivariateSplitResults,
+} from '@/modules/mortality-ae/types';
 
 const props = withDefaults(defineProps<{
     rows: ApiAeUnivariateRow[];

@@ -116,7 +116,11 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 
-import type { ApiAeInsightDrill, ApiAeInsightResult, ApiAeInsightsResults } from '@/types/insights';
+import type {
+    ApiAeInsightDrill,
+    ApiAeInsightResult,
+    ApiAeInsightsResults,
+} from '@/modules/mortality-ae/types';
 import {
     formatCurrency,
     formatPercentFromRatio,

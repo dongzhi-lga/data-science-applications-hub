@@ -13,7 +13,7 @@ import {
     isMortalityDatasetConfig,
 } from '@/types/dataset-config';
 import type { ApiDatasetSchemaResults } from '@/types/datasets';
-import { postAeUploadSchema } from '@/utils/api';
+import { postAeUploadSchema } from '@/modules/mortality-ae/api';
 
 import type { ApiCoreDatasetSchemaResults } from './types/schema';
 
