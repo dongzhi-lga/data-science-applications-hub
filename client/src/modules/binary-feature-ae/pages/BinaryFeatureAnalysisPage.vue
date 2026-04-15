@@ -275,6 +275,10 @@
                 </div>
             </div>
 
+            <div class="q-mt-md">
+                <BinaryFeatureCompareCharts :selected-rows="selectedRows" />
+            </div>
+
             <q-card flat bordered class="q-mt-md">
                 <q-card-section>
                     <div class="text-h6">Compare / Triage Table</div>
@@ -288,10 +292,6 @@
                     />
                 </q-card-section>
             </q-card>
-
-            <div class="q-mt-md">
-                <BinaryFeatureCompareCharts :selected-rows="selectedRows" />
-            </div>
         </div>
     </q-page>
 </template>
