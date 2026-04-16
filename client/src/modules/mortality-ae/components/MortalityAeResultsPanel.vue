@@ -6,7 +6,41 @@
             </div>
         </q-banner>
 
-        <q-card class="q-pa-md q-mt-md">
+        <q-card class="q-pa-md q-mt-md results-card">
+            <div class="row items-start justify-between q-col-gutter-md">
+                <div class="col-12 col-lg-8">
+                    <div class="text-h6">Results Controls</div>
+                    <div class="text-body2 text-grey-7 q-mt-xs">
+                        Update the x-axis and split settings here, then apply them without
+                        leaving the results view.
+                    </div>
+                </div>
+            </div>
+
+            <q-banner
+                v-if="model.errorMsg"
+                class="bg-negative text-white q-mt-md"
+                rounded
+            >
+                {{ model.errorMsg }}
+            </q-banner>
+
+            <MortalityAeVariableControls :model="model" class="q-mt-md" />
+
+            <div class="row items-center q-gutter-sm q-mt-md">
+                <q-btn
+                    label="Apply"
+                    color="primary"
+                    :disable="!model.canAnalyze || model.loading"
+                    :loading="model.loading"
+                    @click="handlers.onAnalyze"
+                />
+                <div v-if="model.loading" class="text-caption text-grey-7">
+                    Updating results...
+                </div>
+            </div>
+
+            <q-separator class="q-my-lg" />
             <div class="text-h6 q-mb-md">A/E Scatter</div>
 
             <q-expansion-item
@@ -58,7 +92,7 @@
             </q-expansion-item>
 
             <div class="row q-col-gutter-md">
-                <div class="col-6">
+                <div class="col-12 col-md-6">
                     <div class="text-subtitle2 q-mb-sm text-center">A/E by Count</div>
                     <AeScatterPlot
                         :rows="model.aeResults.rows"
@@ -73,7 +107,7 @@
                         v-model:split-visible="model.scatterSplitVisible"
                     />
                 </div>
-                <div class="col-6">
+                <div class="col-12 col-md-6">
                     <div class="text-subtitle2 q-mb-sm text-center">A/E by Amount</div>
                     <AeScatterPlot
                         :rows="model.aeResults.rows"
@@ -103,7 +137,10 @@
                     Polynomial Best Fit
                 </div>
 
-                <div v-if="model.aeResults.poly_fit && model.scatterShowOverall" class="q-mb-sm">
+                <div
+                    v-if="model.aeResults.poly_fit && model.scatterShowOverall"
+                    class="q-mb-sm"
+                >
                     <div class="text-body2">
                         <span class="text-weight-medium">Overall:</span>
                         <span class="q-ml-sm equation">
@@ -116,7 +153,7 @@
                             "
                             class="q-ml-md text-grey-7"
                         >
-                            (R² = {{ model.aeResults.poly_fit.r2.toFixed(3) }})
+                            (R^2 = {{ model.aeResults.poly_fit.r2.toFixed(3) }})
                         </span>
                     </div>
                 </div>
@@ -150,7 +187,7 @@
                                 "
                                 class="q-ml-md text-grey-7"
                             >
-                                (R² = {{ split.poly_fit.r2.toFixed(3) }})
+                                (R^2 = {{ split.poly_fit.r2.toFixed(3) }})
                             </span>
                         </div>
                     </template>
@@ -179,7 +216,7 @@
                     <q-separator class="q-my-md" />
                     <div class="text-subtitle1 q-mb-sm">A/E Treemaps</div>
                     <div class="row q-col-gutter-md">
-                        <div class="col-6">
+                        <div class="col-12 col-md-6">
                             <div class="text-subtitle2 q-mb-sm text-center">
                                 A/E by Count (Area = Policy Count)
                             </div>
@@ -194,7 +231,7 @@
                                 v-model:split-visible="model.currentTreemapSplitVisible"
                             />
                         </div>
-                        <div class="col-6">
+                        <div class="col-12 col-md-6">
                             <div class="text-subtitle2 q-mb-sm text-center">
                                 A/E by Amount (Area = Face Amount)
                             </div>
@@ -224,7 +261,7 @@
                     <q-separator class="q-my-md" />
                     <div class="text-subtitle1 q-mb-sm">A/E Treemaps</div>
                     <div class="row q-col-gutter-md">
-                        <div class="col-6">
+                        <div class="col-12 col-md-6">
                             <div class="text-subtitle2 q-mb-sm text-center">
                                 A/E by Count (Area = Policy Count)
                             </div>
@@ -239,7 +276,7 @@
                                 v-model:split-visible="model.currentTreemapSplitVisible"
                             />
                         </div>
-                        <div class="col-6">
+                        <div class="col-12 col-md-6">
                             <div class="text-subtitle2 q-mb-sm text-center">
                                 A/E by Amount (Area = Face Amount)
                             </div>
@@ -319,6 +356,13 @@
                     </q-tab-panel>
                 </q-tab-panels>
             </div>
+
+            <q-inner-loading :showing="model.loading">
+                <div class="column items-center q-gutter-sm">
+                    <q-spinner color="primary" size="42px" />
+                    <div class="text-caption text-grey-7">Updating results...</div>
+                </div>
+            </q-inner-loading>
         </q-card>
     </div>
 </template>
@@ -329,13 +373,19 @@ import AeColaM1StackedBars from './AeColaM1StackedBars.vue';
 import AeScatterPlot from './AeScatterPlot.vue';
 import AeTreemap from './AeTreemap.vue';
 import AeUnivariateTable from './AeUnivariateTable.vue';
+import MortalityAeVariableControls from './MortalityAeVariableControls.vue';
 
 defineProps<{
     model: Record<string, any>;
+    handlers: Record<string, any>;
 }>();
 </script>
 
 <style scoped>
+.results-card {
+    position: relative;
+}
+
 .cola-visual {
     display: flex;
     flex-direction: column;

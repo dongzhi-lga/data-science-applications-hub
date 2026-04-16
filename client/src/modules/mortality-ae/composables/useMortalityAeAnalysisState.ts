@@ -230,7 +230,6 @@ export function useMortalityAeAnalysisState(args: {
 
         loading.value = true;
         errorMsg.value = null;
-        aeResults.value = null;
 
         try {
             const makeSingleVariableSpec = (which: 'x' | 'split'): ApiAeXVariable => {
@@ -415,7 +414,7 @@ export function useMortalityAeAnalysisState(args: {
                 ? makeCrossVariableSpec('x')
                 : makeSingleVariableSpec('x');
 
-            resultsVariableName.value = variables.isXCross.value
+            const nextResultsVariableName = variables.isXCross.value
                 ? `${variables.xCrossAName.value || 'A'} x ${variables.xCrossBName.value || 'B'}`
                 : variables.xVarName.value;
 
@@ -427,18 +426,17 @@ export function useMortalityAeAnalysisState(args: {
                       : null
                 : null;
 
-            resultsSplitVariableName.value = variables.splitVarName.value
+            const nextResultsSplitVariableName = variables.splitVarName.value
                 ? variables.isSplitCross.value
                     ? `${variables.splitCrossAName.value || 'A'} x ${variables.splitCrossBName.value || 'B'}`
                     : variables.splitVarName.value
                 : null;
 
-            resultsSplitXAxisKind.value = variables.splitVarName.value
+            const nextResultsSplitXAxisKind = variables.splitVarName.value
                 ? 'categorical'
                 : null;
-            resultsXAxisKind.value = 'categorical';
-            resultsXDomain.value = null;
-            resultsTab.value = 'overall';
+            const nextResultsXAxisKind = 'categorical' as const;
+            const nextResultsXDomain = null;
 
             const request = {
                 x_variable: xVariable,
@@ -452,14 +450,16 @@ export function useMortalityAeAnalysisState(args: {
                         : null,
             };
 
+            let nextResults: ApiAeUnivariateResults | null = null;
+
             if (selectedConfigId.value) {
                 const params: ApiAeUnivariateFromConfigParameters = {
                     config_id: selectedConfigId.value,
                     ...request,
                 };
-                aeResults.value = await postAeUnivariateFromConfig(params);
+                nextResults = await postAeUnivariateFromConfig(params);
             } else if (uploadedFile.value) {
-                aeResults.value = await postAeUnivariateFromCsv(uploadedFile.value, {
+                nextResults = await postAeUnivariateFromCsv(uploadedFile.value, {
                     dataset_name: '',
                     ...request,
                     column_mapping: {
@@ -474,6 +474,19 @@ export function useMortalityAeAnalysisState(args: {
                     },
                 });
             }
+
+            if (!nextResults) {
+                throw new Error('Analysis did not return results');
+            }
+
+            aeResults.value = nextResults;
+            resultsVariableName.value = nextResultsVariableName;
+            resultsSplitVariableName.value = nextResultsSplitVariableName;
+            resultsSplitXAxisKind.value = nextResultsSplitXAxisKind;
+            resultsXAxisKind.value = nextResultsXAxisKind;
+            resultsXDomain.value = nextResultsXDomain;
+            resultsTab.value = 'overall';
+            colaResultsTab.value = 'overall';
         } catch (error) {
             errorMsg.value = error instanceof Error ? error.message : String(error);
         } finally {
@@ -490,7 +503,6 @@ export function useMortalityAeAnalysisState(args: {
             'split',
             drill.split_variable ?? null,
         );
-        aeResults.value = null;
         errorMsg.value = null;
         await nextTick();
         await onAnalyze();
@@ -763,6 +775,7 @@ export function useMortalityAeAnalysisState(args: {
 
     return {
         schema,
+        schemaLoading,
         inputBindings,
         resultsBindings,
         inputHandlers,

@@ -8,6 +8,7 @@
             <MortalityAeResultsPanel
                 v-if="resultsModel.aeResults"
                 :model="resultsModel"
+                :handlers="analysis.inputHandlers"
             />
         </div>
     </q-page>
@@ -38,13 +39,18 @@ variables = useMortalityAeVariableBuilder({
     schema: analysis.schema,
 });
 
-const inputModel = proxyRefs({
+const sharedBindings = {
     ...analysis.inputBindings,
+    schema: analysis.schema,
+    schemaLoading: analysis.schemaLoading,
     ...variables.inputBindings,
-});
+};
+
+const inputModel = proxyRefs(sharedBindings);
 
 const resultsModel = proxyRefs({
     ...analysis.resultsBindings,
+    ...sharedBindings,
 });
 </script>
 
