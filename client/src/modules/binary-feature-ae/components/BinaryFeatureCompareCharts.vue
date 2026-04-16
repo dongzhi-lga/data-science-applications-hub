@@ -167,6 +167,7 @@ async function renderCharts() {
                 row.ae_ratio,
                 row.significance_class,
                 row.rule,
+                row.claim_count,
             ]),
             hovertemplate:
                 '<b>%{customdata[4]}</b><br>' +
@@ -174,6 +175,7 @@ async function renderCharts() {
                 'Category: %{customdata[1]}<br>' +
                 'A/E Ratio: %{customdata[2]:.4f}<br>' +
                 'Significance: %{customdata[3]}<br>' +
+                'Claim Count: %{customdata[5]:,.0f}<br>' +
                 'Share: %{x:.1f}%<extra></extra>',
         })),
         {

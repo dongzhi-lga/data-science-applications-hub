@@ -282,6 +282,7 @@ async function renderCharts() {
                 `Category: ${row.category}<br>` +
                 `A/E Ratio: ${row.ae_ratio.toFixed(4)}<br>` +
                 `Significance: ${row.significance_class}<br>` +
+                `Claim Count: ${row.claim_count.toLocaleString()}<br>` +
                 `Share: %{x:.1f}%` +
                 '<extra></extra>',
         })),
