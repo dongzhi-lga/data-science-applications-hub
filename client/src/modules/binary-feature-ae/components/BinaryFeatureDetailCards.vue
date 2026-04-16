@@ -69,6 +69,7 @@
             <div class="col-12 col-md-6">
                 <q-card flat bordered>
                     <q-card-section>
+                        <div v-if="focusedRow" class="text-caption text-grey-7 q-mb-xs chart-rule-subtitle">{{ focusedRow.RuleName }}</div>
                         <div ref="ciChartEl" class="mini-chart"></div>
                     </q-card-section>
                 </q-card>
@@ -76,6 +77,7 @@
             <div class="col-12 col-md-6">
                 <q-card flat bordered>
                     <q-card-section>
+                        <div v-if="focusedRow" class="text-caption text-grey-7 q-mb-xs chart-rule-subtitle">{{ focusedRow.RuleName }}</div>
                         <div ref="mixChartEl" class="mini-chart"></div>
                     </q-card-section>
                 </q-card>
@@ -92,6 +94,7 @@ import type { ApiBinaryFeatureRow } from '@/types/binary-feature-ae';
 import {
     formatPercentFromRatio,
     formatWholeNumber,
+    truncateLabel,
 } from '@/utils/format';
 
 import { COLA_DEFINITIONS } from '@/modules/binary-feature-ae/constants';
@@ -208,13 +211,14 @@ async function renderCharts() {
 
     const ciLow = row.ci_lower;
     const ciHigh = row.ci_upper;
+    const truncatedRule = truncateLabel(row.rule);
     await Plotly.react(
         ciEl,
         [
             {
                 type: 'scatter',
                 x: [ciLow, ciHigh],
-                y: [row.rule, row.rule],
+                y: [truncatedRule, truncatedRule],
                 mode: 'lines',
                 line: { width: 6, color: '#4f46e5' },
                 hoverinfo: 'skip',
@@ -223,7 +227,7 @@ async function renderCharts() {
             {
                 type: 'scatter',
                 x: [row.ae_ratio],
-                y: [row.rule],
+                y: [truncatedRule],
                 mode: 'markers',
                 marker: {
                     size: 12,
@@ -231,6 +235,8 @@ async function renderCharts() {
                     color: '#111827',
                 },
                 hovertemplate:
+                    `<b>${row.rule}</b><br>` +
+                    `${row.RuleName}<br>` +
                     `A/E: ${row.ae_ratio.toFixed(4)}<br>` +
                     `CI: [${ciLow.toFixed(4)}, ${ciHigh.toFixed(4)}]` +
                     '<extra></extra>',
@@ -241,7 +247,7 @@ async function renderCharts() {
             template: 'plotly_white',
             title: 'Selected Rule: A/E Confidence Interval',
             height: 260,
-            margin: { l: 40, r: 20, t: 50, b: 40 },
+            margin: { l: 90, r: 20, t: 50, b: 40 },
             xaxis: {
                 title: 'A/E Ratio',
                 range: [Math.max(0, Math.min(ciLow, row.ae_ratio, 1) - 0.1), Math.max(ciHigh, row.ae_ratio, 1) + 0.1],
@@ -267,7 +273,7 @@ async function renderCharts() {
         COLA_DEFINITIONS.map((cola) => ({
             type: 'bar',
             orientation: 'h',
-            y: [row.rule],
+            y: [truncatedRule],
             x: [row[`${cola.key}_display` as keyof ApiBinaryFeatureRow] as number],
             name: cola.label,
             hovertemplate:
@@ -284,7 +290,7 @@ async function renderCharts() {
             title: 'Selected Rule: Claim Mix (Share %)',
             barmode: 'stack',
             height: 260,
-            margin: { l: 20, r: 20, t: 50, b: 90 },
+            margin: { l: 90, r: 20, t: 50, b: 90 },
             xaxis: { title: '' },
             yaxis: { title: '' },
         },
@@ -334,5 +340,11 @@ onBeforeUnmount(() => {
 .mini-chart {
     width: 100%;
     min-height: 260px;
+}
+
+.chart-rule-subtitle {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 </style>

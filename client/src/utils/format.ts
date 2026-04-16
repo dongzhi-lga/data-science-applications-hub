@@ -92,3 +92,8 @@ export function formatPercentFromRatio(value: number | null): string {
         maximumFractionDigits: 1,
     }).format(value);
 }
+
+export function truncateLabel(label: string, maxLength = 12): string {
+    if (label.length <= maxLength) return label;
+    return label.slice(0, maxLength) + '\u2026';
+}

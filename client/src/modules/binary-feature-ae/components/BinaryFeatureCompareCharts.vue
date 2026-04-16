@@ -22,6 +22,7 @@ import Plotly from 'plotly.js-dist-min';
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 import type { ApiBinaryFeatureRow } from '@/types/binary-feature-ae';
+import { truncateLabel } from '@/utils/format';
 
 import { COLA_DEFINITIONS } from '@/modules/binary-feature-ae/constants';
 
@@ -85,7 +86,7 @@ async function renderCharts() {
             {
                 type: 'scatter',
                 x: sortedRows.map((row) => row.ae_ratio),
-                y: sortedRows.map((row) => row.rule),
+                y: sortedRows.map((row) => truncateLabel(row.rule)),
                 mode: 'markers',
                 error_x: {
                     type: 'data',
@@ -106,9 +107,10 @@ async function renderCharts() {
                     row.claim_count,
                     row.hit_count,
                     row.significance_class,
+                    row.rule,
                 ]),
                 hovertemplate:
-                    '<b>%{y}</b><br>' +
+                    '<b>%{customdata[5]}</b><br>' +
                     'Rule Name: %{customdata[0]}<br>' +
                     'Category: %{customdata[1]}<br>' +
                     'Claim Count: %{customdata[2]:,.0f}<br>' +
@@ -122,9 +124,9 @@ async function renderCharts() {
             template: 'plotly_white',
             title: 'Selected Rules: A/E with Confidence Intervals',
             height: Math.max(320, 120 + 30 * sortedRows.length),
-            margin: { l: 60, r: 20, t: 50, b: 40 },
+            margin: { l: 90, r: 20, t: 50, b: 40 },
             xaxis: { title: 'A/E Ratio' },
-            yaxis: { title: 'Rule' },
+            yaxis: { title: '' },
             shapes: [
                 {
                     type: 'line',
@@ -152,7 +154,7 @@ async function renderCharts() {
         COLA_DEFINITIONS.map((cola) => ({
             type: 'bar',
             orientation: 'h',
-            y: mixRows.map((row) => row.rule),
+            y: mixRows.map((row) => truncateLabel(row.rule)),
             x: mixRows.map(
                 (row) => row[`${cola.key}_display` as keyof ApiBinaryFeatureRow] as number,
             ),
@@ -162,9 +164,10 @@ async function renderCharts() {
                 row.category,
                 row.ae_ratio,
                 row.significance_class,
+                row.rule,
             ]),
             hovertemplate:
-                '<b>%{y}</b><br>' +
+                '<b>%{customdata[4]}</b><br>' +
                 'Rule Name: %{customdata[0]}<br>' +
                 'Category: %{customdata[1]}<br>' +
                 'A/E Ratio: %{customdata[2]:.4f}<br>' +
@@ -176,7 +179,7 @@ async function renderCharts() {
             title: 'Selected Rules: Claim Mix (Share %)',
             barmode: 'stack',
             height: Math.max(320, 100 + 40 * mixRows.length),
-            margin: { l: 20, r: 20, t: 50, b: 110 },
+            margin: { l: 90, r: 20, t: 50, b: 110 },
             xaxis: { title: '' },
             yaxis: { title: '' },
         },
