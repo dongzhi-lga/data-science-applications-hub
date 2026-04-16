@@ -1,5 +1,5 @@
 <template>
-    <div class="column q-gutter-md">
+    <div class="column">
         <q-card v-if="props.showSummary" flat bordered>
             <q-card-section v-if="focusedRow">
                 <div class="text-h6">{{ focusedRow.rule }}</div>
@@ -65,7 +65,7 @@
             </q-card-section>
         </q-card>
 
-        <div v-if="props.showCharts" class="row q-col-gutter-md">
+        <div v-if="props.showCharts" class="row q-col-gutter-md" :class="{ 'q-mt-md': props.showSummary }">
             <div class="col-12 col-md-6">
                 <q-card flat bordered>
                     <q-card-section>
