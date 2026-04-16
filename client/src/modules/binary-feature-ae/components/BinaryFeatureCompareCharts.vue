@@ -80,13 +80,17 @@ async function renderCharts() {
         return right.claim_count - left.claim_count;
     });
 
+    const yLabels = sortedRows.map((row) => truncateLabel(row.rule));
+    const chartHeight = Math.max(400, 120 + 35 * sortedRows.length);
+    const sharedMargin = { l: 90, r: 20, t: 50, b: 110 };
+
     await Plotly.react(
         ciEl,
         [
             {
                 type: 'scatter',
                 x: sortedRows.map((row) => row.ae_ratio),
-                y: sortedRows.map((row) => truncateLabel(row.rule)),
+                y: yLabels,
                 mode: 'markers',
                 error_x: {
                     type: 'data',
@@ -123,10 +127,15 @@ async function renderCharts() {
         {
             template: 'plotly_white',
             title: 'Selected Rules: A/E with Confidence Intervals',
-            height: Math.max(320, 120 + 30 * sortedRows.length),
-            margin: { l: 90, r: 20, t: 50, b: 40 },
+            height: chartHeight,
+            margin: sharedMargin,
             xaxis: { title: 'A/E Ratio' },
-            yaxis: { title: '' },
+            yaxis: {
+                title: '',
+                categoryorder: 'array',
+                categoryarray: yLabels,
+                range: [-0.5, sortedRows.length - 0.5],
+            },
             shapes: [
                 {
                     type: 'line',
@@ -142,24 +151,17 @@ async function renderCharts() {
         { responsive: true },
     );
 
-    const mixRows = [...props.selectedRows].sort((left, right) => {
-        if (left.ae_ratio !== right.ae_ratio) {
-            return left.ae_ratio - right.ae_ratio;
-        }
-        return left.claim_count - right.claim_count;
-    });
-
     await Plotly.react(
         mixEl,
         COLA_DEFINITIONS.map((cola) => ({
             type: 'bar',
             orientation: 'h',
-            y: mixRows.map((row) => truncateLabel(row.rule)),
-            x: mixRows.map(
+            y: yLabels,
+            x: sortedRows.map(
                 (row) => row[`${cola.key}_display` as keyof ApiBinaryFeatureRow] as number,
             ),
             name: cola.label,
-            customdata: mixRows.map((row) => [
+            customdata: sortedRows.map((row) => [
                 row.RuleName,
                 row.category,
                 row.ae_ratio,
@@ -178,10 +180,15 @@ async function renderCharts() {
             template: 'plotly_white',
             title: 'Selected Rules: Claim Mix (Share %)',
             barmode: 'stack',
-            height: Math.max(320, 100 + 40 * mixRows.length),
-            margin: { l: 90, r: 20, t: 50, b: 110 },
+            height: chartHeight,
+            margin: sharedMargin,
             xaxis: { title: '' },
-            yaxis: { title: '' },
+            yaxis: {
+                title: '',
+                categoryorder: 'array',
+                categoryarray: yLabels,
+                range: [-0.5, sortedRows.length - 0.5],
+            },
         },
         { responsive: true },
     );
