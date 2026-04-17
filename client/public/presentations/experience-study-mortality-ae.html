@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Experience Study Mortality A/E</title>
+    <style>
+        :root {
+            --bg-1: #edf3f9;
+            --bg-2: #f7f4ef;
+            --panel: rgba(255, 255, 255, 0.82);
+            --panel-strong: rgba(255, 255, 255, 0.92);
+            --line: rgba(58, 79, 104, 0.15);
+            --line-strong: rgba(34, 55, 80, 0.24);
+            --ink: #152033;
+            --muted: #5b6878;
+            --blue: #235f9a;
+            --blue-soft: #dbe9f6;
+            --teal: #2f7c7a;
+            --gold: #d9a441;
+            --risk: #c94f4f;
+            --risk-soft: #f7d9d9;
+            --good: #5c8b4b;
+            --good-soft: #d9ead2;
+            --shadow: 0 24px 60px rgba(22, 33, 48, 0.16);
+            --radius-xl: 30px;
+            --radius-lg: 22px;
+            --radius-md: 16px;
+            --radius-sm: 12px;
+            --transition: 340ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            min-height: 100%;
+            margin: 0;
+        }
+
+        body {
+            font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top left, rgba(123, 168, 214, 0.22), transparent 28%),
+                radial-gradient(circle at bottom right, rgba(217, 164, 65, 0.16), transparent 32%),
+                linear-gradient(140deg, var(--bg-1), var(--bg-2));
+        }
+
+        button {
+            font: inherit;
+        }
+
+        .deck-app {
+            min-height: 100dvh;
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            gap: 20px;
+            padding: 24px;
+        }
+
+        .deck-header {
+            width: min(92vw, 1440px);
+            margin: 0 auto;
+            display: grid;
+            gap: 14px;
+        }
+
+        .deck-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .brand-cluster {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .brand-chip,
+        .meta-chip {
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.74);
+            border: 1px solid rgba(255, 255, 255, 0.85);
+            color: var(--muted);
+            font-size: 0.85rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .brand-title {
+            font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+            font-size: clamp(1.2rem, 1.4vw + 0.8rem, 1.8rem);
+            letter-spacing: 0.01em;
+        }
+
+        .progress-shell {
+            height: 4px;
+            width: 100%;
+            background: rgba(34, 55, 80, 0.12);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 100%;
+            transform-origin: left center;
+            transform: scaleX(0.3334);
+            background: linear-gradient(90deg, var(--blue), #6d9fcc);
+            transition: transform var(--transition);
+        }
+
+        .deck-stage {
+            width: min(92vw, calc((100dvh - 220px) * 16 / 9), 1440px);
+            aspect-ratio: 16 / 9;
+            max-height: calc(100dvh - 220px);
+            margin: 0 auto;
+            position: relative;
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+            background:
+                linear-gradient(160deg, rgba(255, 255, 255, 0.86), rgba(247, 249, 252, 0.94)),
+                linear-gradient(140deg, rgba(221, 233, 244, 0.7), rgba(253, 248, 239, 0.78));
+            border: 1px solid rgba(255, 255, 255, 0.92);
+            box-shadow: var(--shadow);
+            isolation: isolate;
+        }
+
+        .deck-stage::before,
+        .deck-stage::after {
+            content: "";
+            position: absolute;
+            border-radius: 999px;
+            filter: blur(20px);
+            opacity: 0.75;
+            z-index: 0;
+        }
+
+        .deck-stage::before {
+            width: 260px;
+            height: 260px;
+            top: -60px;
+            right: -40px;
+            background: rgba(35, 95, 154, 0.12);
+        }
+
+        .deck-stage::after {
+            width: 220px;
+            height: 220px;
+            bottom: -70px;
+            left: -40px;
+            background: rgba(217, 164, 65, 0.14);
+        }
+
+        .slide {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            grid-template-rows: auto 1fr;
+            gap: 18px;
+            padding: 38px 42px 34px;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateX(38px) scale(0.985);
+            transition:
+                opacity var(--transition),
+                transform var(--transition);
+            z-index: 1;
+        }
+
+        .slide.is-active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateX(0) scale(1);
+        }
+
+        .slide-topline {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .slide-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--blue);
+            font-size: 0.88rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .slide-kicker::before {
+            content: "";
+            width: 36px;
+            height: 1px;
+            background: currentColor;
+        }
+
+        .slide-count {
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            color: var(--muted);
+            background: rgba(255, 255, 255, 0.68);
+            font-size: 0.85rem;
+        }
+
+        .slide-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.02fr) minmax(380px, 0.98fr);
+            gap: 28px;
+            min-height: 0;
+        }
+
+        .copy-panel,
+        .visual-panel {
+            min-height: 0;
+            position: relative;
+        }
+
+        .copy-panel {
+            display: grid;
+            gap: 20px;
+            align-content: start;
+        }
+
+        .slide-title {
+            margin: 0;
+            font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+            font-size: clamp(2rem, 2.4vw + 0.9rem, 3.4rem);
+            line-height: 1.03;
+            letter-spacing: -0.02em;
+            max-width: 12ch;
+        }
+
+        .slide-summary {
+            margin: 0;
+            max-width: 54ch;
+            color: var(--muted);
+            font-size: clamp(1rem, 0.45vw + 0.9rem, 1.15rem);
+            line-height: 1.55;
+        }
+
+        .bullet-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            gap: 14px;
+        }
+
+        .bullet {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 14px;
+            padding: 16px 18px;
+            border-radius: var(--radius-md);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(247, 250, 252, 0.82));
+            border: 1px solid rgba(34, 55, 80, 0.08);
+            box-shadow: 0 14px 30px rgba(21, 32, 51, 0.06);
+            opacity: 0;
+            transform: translateY(18px);
+            transition:
+                opacity var(--transition),
+                transform var(--transition);
+            transition-delay: var(--delay, 0s);
+        }
+
+        .slide.is-active .bullet,
+        .slide.is-active .visual-card,
+        .slide.is-active .callout-ribbon {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .bullet-marker {
+            width: 12px;
+            height: 12px;
+            border-radius: 999px;
+            margin-top: 6px;
+            background: linear-gradient(135deg, var(--blue), #77a8d4);
+            box-shadow: 0 0 0 6px rgba(35, 95, 154, 0.12);
+        }
+
+        .bullet-risk .bullet-marker {
+            background: linear-gradient(135deg, var(--risk), #e37a7a);
+            box-shadow: 0 0 0 6px rgba(201, 79, 79, 0.12);
+        }
+
+        .bullet-text {
+            margin: 0;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .bullet-text strong {
+            color: var(--ink);
+        }
+
+        .visual-card {
+            height: 100%;
+            display: grid;
+            grid-template-rows: auto 1fr;
+            gap: 14px;
+            padding: 20px;
+            border-radius: 24px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(247, 250, 252, 0.74));
+            border: 1px solid rgba(34, 55, 80, 0.08);
+            box-shadow: 0 18px 38px rgba(21, 32, 51, 0.09);
+            opacity: 0;
+            transform: translateY(18px);
+            transition:
+                opacity var(--transition),
+                transform var(--transition);
+            transition-delay: 0.28s;
+        }
+
+        .visual-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .visual-title {
+            margin: 0;
+            font-size: 0.9rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .visual-badges {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .visual-badge {
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(35, 95, 154, 0.09);
+            border: 1px solid rgba(35, 95, 154, 0.12);
+            color: var(--blue);
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+
+        .visual-badge.risk {
+            background: rgba(201, 79, 79, 0.11);
+            border-color: rgba(201, 79, 79, 0.16);
+            color: var(--risk);
+        }
+
+        .visual-svg {
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+            display: block;
+            border-radius: 18px;
+            background:
+                linear-gradient(180deg, rgba(250, 252, 253, 0.84), rgba(239, 244, 248, 0.94)),
+                linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.56));
+            border: 1px solid rgba(34, 55, 80, 0.08);
+        }
+
+        .callout-ribbon {
+            position: absolute;
+            right: 16px;
+            bottom: 16px;
+            max-width: 280px;
+            padding: 14px 16px;
+            border-radius: 18px;
+            background: rgba(21, 32, 51, 0.88);
+            color: #f8fbff;
+            box-shadow: 0 16px 34px rgba(21, 32, 51, 0.22);
+            opacity: 0;
+            transform: translateY(18px);
+            transition:
+                opacity var(--transition),
+                transform var(--transition);
+            transition-delay: 0.42s;
+        }
+
+        .callout-ribbon strong {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+            letter-spacing: 0.04em;
+        }
+
+        .callout-ribbon p {
+            margin: 0;
+            font-size: 0.9rem;
+            line-height: 1.45;
+            color: rgba(248, 251, 255, 0.84);
+        }
+
+        .deck-controls {
+            width: min(92vw, 1440px);
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .nav-button {
+            appearance: none;
+            border: 1px solid rgba(34, 55, 80, 0.1);
+            background: rgba(255, 255, 255, 0.82);
+            color: var(--ink);
+            border-radius: 999px;
+            padding: 12px 18px;
+            min-width: 118px;
+            cursor: pointer;
+            transition:
+                transform 180ms ease,
+                border-color 180ms ease,
+                background 180ms ease;
+        }
+
+        .nav-button:hover:not(:disabled),
+        .pager-button:hover {
+            transform: translateY(-1px);
+            border-color: rgba(35, 95, 154, 0.28);
+            background: rgba(255, 255, 255, 0.96);
+        }
+
+        .nav-button:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .pager {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .pager-button {
+            appearance: none;
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            border: 1px solid rgba(34, 55, 80, 0.1);
+            background: rgba(255, 255, 255, 0.76);
+            color: var(--muted);
+            cursor: pointer;
+            transition:
+                transform 180ms ease,
+                background 180ms ease,
+                color 180ms ease,
+                border-color 180ms ease;
+        }
+
+        .pager-button.is-active {
+            background: linear-gradient(180deg, #235f9a, #1b4f82);
+            color: #ffffff;
+            border-color: transparent;
+            box-shadow: 0 16px 30px rgba(35, 95, 154, 0.22);
+        }
+
+        .slide-legend {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            color: var(--muted);
+            font-size: 0.82rem;
+        }
+
+        .legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .legend-swatch {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .legend-count {
+            background: var(--blue);
+        }
+
+        .legend-amount {
+            background: var(--gold);
+        }
+
+        .legend-split {
+            background: var(--teal);
+        }
+
+        .svg-label {
+            font-size: 0.95rem;
+            fill: var(--ink);
+            font-weight: 600;
+        }
+
+        .svg-small {
+            font-size: 0.8rem;
+            fill: var(--muted);
+        }
+
+        .svg-tiny {
+            font-size: 0.72rem;
+            fill: var(--muted);
+        }
+
+        .svg-emphasis {
+            fill: var(--risk);
+            font-weight: 700;
+        }
+
+        .svg-card {
+            fill: rgba(255, 255, 255, 0.92);
+            stroke: rgba(34, 55, 80, 0.08);
+            stroke-width: 1;
+        }
+
+        @media (max-width: 1100px) {
+            .deck-stage {
+                width: min(94vw, calc((100dvh - 220px) * 16 / 9));
+            }
+
+            .slide {
+                padding: 30px 30px 28px;
+            }
+
+            .slide-grid {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto minmax(280px, 1fr);
+            }
+
+            .slide-title {
+                max-width: none;
+            }
+
+            .visual-panel {
+                min-height: 280px;
+            }
+        }
+
+        @media (max-width: 760px), (max-height: 760px) {
+            .deck-app {
+                padding: 14px;
+                gap: 14px;
+            }
+
+            .deck-stage {
+                width: 100%;
+                aspect-ratio: auto;
+                max-height: none;
+                min-height: calc(100dvh - 200px);
+            }
+
+            .slide {
+                padding: 24px 20px 22px;
+                overflow: auto;
+            }
+
+            .deck-header,
+            .deck-controls {
+                width: 100%;
+            }
+
+            .deck-controls {
+                justify-content: center;
+            }
+
+            .nav-button {
+                min-width: 0;
+                flex: 1 1 140px;
+            }
+
+            .pager {
+                order: -1;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="deck-app">
+        <header class="deck-header">
+            <div class="deck-meta">
+                <div class="brand-cluster">
+                    <span class="brand-chip">Data Science Applications Hub</span>
+                    <div class="brand-title">Experience Study Mortality A/E Strategy Deck</div>
+                </div>
+                <div class="meta-chip" id="slideStatus" aria-live="polite">Slide 1 of 3</div>
+            </div>
+            <div class="progress-shell" aria-hidden="true">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+        </header>
+
+        <main class="deck-stage" aria-label="Experience Study Mortality A/E presentation">
+            <section class="slide is-active" id="slide-1" data-title="The Core Purpose: Config-Backed Mortality Exploration">
+                <div class="slide-topline">
+                    <div class="slide-kicker">Slide 01</div>
+                    <div class="slide-count">Reusable exploratory workflow</div>
+                </div>
+
+                <div class="slide-grid">
+                    <div class="copy-panel">
+                        <div>
+                            <h1 class="slide-title">The Core Purpose: Config-Backed Mortality Exploration</h1>
+                            <p class="slide-summary">
+                                Experience Study Mortality A/E turns one saved mortality configuration
+                                into a flexible analytical surface for repeated hypothesis testing.
+                            </p>
+                        </div>
+
+                        <ul class="bullet-list">
+                            <li class="bullet" style="--delay: 0.08s;">
+                                <div class="bullet-marker"></div>
+                                <p class="bullet-text">
+                                    <strong>A saved mortality configuration</strong> reloads the
+                                    dataset, mappings, and analysis context without remapping files.
+                                </p>
+                            </li>
+                            <li class="bullet" style="--delay: 0.16s;">
+                                <div class="bullet-marker"></div>
+                                <p class="bullet-text">
+                                    <strong>The x-axis can be numeric, date, categorical, or A x B</strong>,
+                                    so analysts can test real business hypotheses instead of canned cuts.
+                                </p>
+                            </li>
+                            <li class="bullet" style="--delay: 0.24s;">
+                                <div class="bullet-marker"></div>
+                                <p class="bullet-text">
+                                    <strong>A/E by Count and A/E by Amount sit side-by-side</strong>
+                                    with 95% confidence intervals so signal and credibility stay visible
+                                    together.
+                                </p>
+                            </li>
+                            <li class="bullet" style="--delay: 0.32s;">
+                                <div class="bullet-marker"></div>
+                                <p class="bullet-text">
+                                    <strong>Optional split overlays</strong> turn one run into a
+                                    comparison surface.
+                                </p>
+                            </li>
+                        </ul>
+
+                        <div class="slide-legend" aria-label="Mortality legend">
+                            <span class="legend-item"><span class="legend-swatch legend-count"></span>A/E by Count</span>
+                            <span class="legend-item"><span class="legend-swatch legend-amount"></span>A/E by Amount</span>
+                            <span class="legend-item"><span class="legend-swatch legend-split"></span>Split Overlay</span>
+                        </div>
+                    </div>
+
+                    <div class="visual-panel">
+                        <div class="visual-card">
+                            <div class="visual-head">
+                                <p class="visual-title">Config To Analysis Surface</p>
+                                <div class="visual-badges">
+                                    <span class="visual-badge">Saved config</span>
+                                    <span class="visual-badge">95% CI</span>
+                                    <span class="visual-badge">Split compare</span>
+                                </div>
+                            </div>
+
+                            <svg class="visual-svg" viewBox="0 0 720 420" role="img" aria-labelledby="mortalitySlide1Title mortalitySlide1Desc">
+                                <title id="mortalitySlide1Title">Saved configuration feeding a reusable mortality analysis workflow</title>
+                                <desc id="mortalitySlide1Desc">A schematic shows a saved configuration and variable builder feeding separate count and amount scatter panels with confidence intervals and split markers.</desc>
+
+                                <rect x="34" y="44" width="218" height="132" rx="24" class="svg-card" />
+                                <text x="58" y="78" class="svg-label">Saved Mortality Configuration</text>
+                                <text x="58" y="104" class="svg-small">Stored file, mapped columns, and</text>
+                                <text x="58" y="124" class="svg-small">reusable analysis context reload together.</text>
+                                <rect x="58" y="140" width="82" height="20" rx="10" fill="rgba(35,95,154,0.11)" />
+                                <rect x="148" y="140" width="74" height="20" rx="10" fill="rgba(47,124,122,0.10)" />
+                                <text x="71" y="154" class="svg-tiny">MAC / MEC</text>
+                                <text x="160" y="154" class="svg-tiny">MAN / MEN</text>
+
+                                <rect x="34" y="214" width="218" height="154" rx="24" class="svg-card" />
+                                <text x="58" y="248" class="svg-label">Variable Builder</text>
+                                <text x="58" y="272" class="svg-small">X-axis choices stay broad enough for business questions.</text>
+                                <rect x="58" y="292" width="70" height="22" rx="11" fill="rgba(35,95,154,0.11)" />
+                                <rect x="136" y="292" width="56" height="22" rx="11" fill="rgba(217,164,65,0.14)" />
+                                <rect x="200" y="292" width="92" height="22" rx="11" fill="rgba(92,139,75,0.12)" />
+                                <rect x="136" y="326" width="48" height="22" rx="11" fill="rgba(201,79,79,0.12)" />
+                                <text x="76" y="307" class="svg-tiny">Numeric</text>
+                                <text x="150" y="307" class="svg-tiny">Date</text>
+                                <text x="219" y="307" class="svg-tiny">Categorical</text>
+                                <text x="151" y="341" class="svg-tiny">A x B</text>
+                                <text x="58" y="342" class="svg-small">Split overlay can be added without rebuilding the run.</text>
+
+                                <path d="M252 110 C298 110, 312 102, 352 92" fill="none" stroke="#7f8da0" stroke-width="3" />
+                                <polygon points="352,92 341,86 343,99" fill="#7f8da0" />
+                                <path d="M252 290 C308 290, 318 280, 352 252" fill="none" stroke="#7f8da0" stroke-width="3" />
+                                <polygon points="352,252 341,248 345,260" fill="#7f8da0" />
+
+                                <rect x="378" y="40" width="304" height="158" rx="24" fill="rgba(219,233,246,0.54)" stroke="rgba(35,95,154,0.14)" />
+                                <text x="400" y="72" class="svg-label">A/E by Count</text>
+                                <text x="400" y="94" class="svg-small">Credibility and signal stay visible together.</text>
+                                <g stroke="rgba(34,55,80,0.12)" stroke-width="1">
+                                    <line x1="406" y1="166" x2="650" y2="166" />
+                                    <line x1="406" y1="134" x2="650" y2="134" />
+                                    <line x1="406" y1="102" x2="650" y2="102" />
+                                    <line x1="406" y1="166" x2="406" y2="88" />
+                                </g>
+                                <line x1="406" y1="134" x2="650" y2="134" stroke="#7f8da0" stroke-width="2" stroke-dasharray="7 7" />
+                                <g stroke="#235f9a" stroke-width="2">
+                                    <line x1="442" y1="118" x2="442" y2="150" />
+                                    <line x1="492" y1="110" x2="492" y2="146" />
+                                    <line x1="546" y1="96" x2="546" y2="138" />
+                                    <line x1="600" y1="104" x2="600" y2="152" />
+                                </g>
+                                <g>
+                                    <circle cx="442" cy="132" r="9" fill="#235f9a" />
+                                    <circle cx="455" cy="126" r="6" fill="#2f7c7a" />
+                                    <circle cx="492" cy="126" r="10" fill="#235f9a" />
+                                    <circle cx="505" cy="118" r="6" fill="#2f7c7a" />
+                                    <circle cx="546" cy="112" r="11" fill="#c94f4f" />
+                                    <circle cx="559" cy="104" r="6" fill="#2f7c7a" />
+                                    <circle cx="600" cy="130" r="10" fill="#235f9a" />
+                                    <circle cx="613" cy="122" r="6" fill="#2f7c7a" />
+                                </g>
+                                <text x="568" y="88" class="svg-emphasis">Elevated segment</text>
+
+                                <rect x="378" y="220" width="304" height="158" rx="24" fill="rgba(247,244,239,0.76)" stroke="rgba(217,164,65,0.22)" />
+                                <text x="400" y="252" class="svg-label">A/E by Amount</text>
+                                <text x="400" y="274" class="svg-small">Same run, different severity signal.</text>
+                                <g stroke="rgba(34,55,80,0.12)" stroke-width="1">
+                                    <line x1="406" y1="346" x2="650" y2="346" />
+                                    <line x1="406" y1="314" x2="650" y2="314" />
+                                    <line x1="406" y1="282" x2="650" y2="282" />
+                                    <line x1="406" y1="346" x2="406" y2="250" />
+                                </g>
+                                <line x1="406" y1="314" x2="650" y2="314" stroke="#7f8da0" stroke-width="2" stroke-dasharray="7 7" />
+                                <g stroke="#d9a441" stroke-width="2">
+                                    <line x1="442" y1="296" x2="442" y2="334" />
+                                    <line x1="492" y1="286" x2="492" y2="324" />
+                                    <line x1="546" y1="274" x2="546" y2="320" />
+                                    <line x1="600" y1="288" x2="600" y2="334" />
+                                </g>
+                                <g>
+                                    <rect x="433" y="304" width="18" height="18" rx="6" fill="#d9a441" />
+                                    <rect x="484" y="298" width="18" height="18" rx="6" fill="#d9a441" />
+                                    <rect x="537" y="286" width="18" height="18" rx="6" fill="#c94f4f" />
+                                    <rect x="592" y="302" width="18" height="18" rx="6" fill="#d9a441" />
+                                </g>
+                                <text x="570" y="262" class="svg-small">Severity can peak in a different lane.</text>
+                            </svg>
+                        </div>
+
+                        <div class="callout-ribbon">
+                            <strong>Reusable workflow</strong>
+                            <p>
+                                One saved config can support many exploratory passes without restarting
+                                the setup process.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="slide" id="slide-2" data-title="The Analytical Edge: Diagnostic Insights That Drill Back" aria-hidden="true">
+                <div class="slide-topline">
+                    <div class="slide-kicker">Slide 02</div>
+                    <div class="slide-count">Ranked signal discovery</div>
+                </div>
+
+                <div class="slide-grid">
+                    <div class="copy-panel">
+                        <div>
+                            <h1 class="slide-title">The Analytical Edge: Diagnostic Insights That Drill Back</h1>
+                            <p class="slide-summary">
+                                The module does not start from a blank canvas. It starts from
+                                machine-ranked segments that can be drilled straight back into the
+                                mortality controls.
+                            </p>
+                        </div>
+
+                        <ul class="bullet-list">
+                            <li class="bullet" style="--delay: 0.08s;">
+                                <div class="bullet-marker"></div>
+                                <p class="bullet-text">
+                                    <strong>DuckDB-ranked 1D and 2D segments</strong> are generated
+                                    from the saved dataset configuration before manual slicing starts.
+                                </p>
+                            </li>
+                            <li class="bullet" style="--delay: 0.16s;">
+                                <div class="bullet-marker"></div>
+                                <p class="bullet-text">
+                                    <strong>Insights surface sample, actual, expected, variance, and A/E</strong>
+                                    for both Count and Amount in one ranked view.
+                                </p>
+                            </li>
+                            <li class="bullet bullet-risk" style="--delay: 0.24s;">
+                                <div class="bullet-marker"></div>
+                                <p class="bullet-text">
+                                    <strong>One click drills the winning segment back</strong> into the
+                                    mortality controls.
+                                </p>
+                            </li>
+                            <li class="bullet" style="--delay: 0.32s;">
+                                <div class="bullet-marker"></div>
+                                <p class="bullet-text">
+                                    <strong>The workflow starts from the strongest signal</strong> instead
+                                    of a blank canvas.
+                                </p>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="visual-panel">
+                        <div class="visual-card">
+                            <div class="visual-head">
+                                <p class="visual-title">DuckDB Insights With Drill Back</p>
+                                <div class="visual-badges">
+                                    <span class="visual-badge">DuckDB</span>
+                                    <span class="visual-badge">Count + Amount</span>
+                                    <span class="visual-badge risk">Drill to controls</span>
+                                </div>
+                            </div>
+
+                            <svg class="visual-svg" viewBox="0 0 720 420" role="img" aria-labelledby="mortalitySlide2Title mortalitySlide2Desc">
+                                <title id="mortalitySlide2Title">Diagnostic insight board with drill-back path</title>
+                                <desc id="mortalitySlide2Desc">Two ranked insight lanes for count and amount highlight a top segment, then route it back into the mortality controls.</desc>
+
+                                <rect x="34" y="36" width="420" height="348" rx="26" class="svg-card" />
+                                <rect x="52" y="56" width="130" height="28" rx="14" fill="rgba(35,95,154,0.11)" />
+                                <text x="74" y="75" class="svg-tiny">Saved config insight scan</text>
+                                <text x="52" y="112" class="svg-label">Diagnostic Insights</text>
+                                <text x="52" y="132" class="svg-small">Ranked 1D and 2D segments before manual slicing.</text>
+
+                                <rect x="52" y="156" width="384" height="88" rx="20" fill="rgba(219,233,246,0.56)" stroke="rgba(35,95,154,0.14)" />
+                                <text x="70" y="184" class="svg-label">Count</text>
+                                <rect x="70" y="198" width="350" height="32" rx="16" fill="rgba(255,255,255,0.92)" />
+                                <rect x="70" y="236" width="314" height="8" rx="4" fill="rgba(35,95,154,0.18)" />
+                                <rect x="70" y="236" width="278" height="8" rx="4" fill="#235f9a" />
+                                <text x="88" y="219" class="svg-tiny">Older issue age x smoker band</text>
+                                <text x="280" y="219" class="svg-tiny">Sample 12.4k</text>
+                                <text x="352" y="219" class="svg-tiny">A/E 1.84</text>
+
+                                <rect x="52" y="264" width="384" height="88" rx="20" fill="rgba(247,244,239,0.78)" stroke="rgba(217,164,65,0.18)" />
+                                <text x="70" y="292" class="svg-label">Amount</text>
+                                <rect x="70" y="306" width="350" height="32" rx="16" fill="rgba(255,255,255,0.92)" />
+                                <rect x="70" y="344" width="314" height="8" rx="4" fill="rgba(217,164,65,0.16)" />
+                                <rect x="70" y="344" width="242" height="8" rx="4" fill="#d9a441" />
+                                <text x="88" y="327" class="svg-tiny">Preferred class x duration band</text>
+                                <text x="286" y="327" class="svg-tiny">Variance +$2.3M</text>
+                                <text x="366" y="327" class="svg-tiny">A/E 1.52</text>
+
+                                <rect x="466" y="72" width="218" height="284" rx="26" fill="rgba(255,255,255,0.92)" stroke="rgba(34,55,80,0.1)" />
+                                <text x="490" y="108" class="svg-label">Mortality Controls</text>
+                                <text x="490" y="130" class="svg-small">Winning segment drills straight into the analysis surface.</text>
+                                <rect x="490" y="158" width="162" height="24" rx="12" fill="rgba(35,95,154,0.11)" />
+                                <text x="507" y="174" class="svg-tiny">X variable: Issue age</text>
+                                <rect x="490" y="194" width="136" height="24" rx="12" fill="rgba(47,124,122,0.10)" />
+                                <text x="507" y="210" class="svg-tiny">Split: Smoker</text>
+                                <rect x="490" y="232" width="178" height="88" rx="18" fill="rgba(237,243,249,0.82)" />
+                                <text x="508" y="258" class="svg-tiny">Top segment applied:</text>
+                                <text x="508" y="282" class="svg-small">Older issue age</text>
+                                <text x="508" y="302" class="svg-small">x smoker band</text>
+
+                                <path d="M420 214 C470 214, 462 168, 490 168" fill="none" stroke="#c94f4f" stroke-width="3.2" />
+                                <polygon points="490,168 478,162 480,175" fill="#c94f4f" />
+                                <rect x="210" y="192" width="150" height="44" rx="18" fill="rgba(201,79,79,0.12)" stroke="rgba(201,79,79,0.18)" />
+                                <text x="228" y="212" class="svg-emphasis">Top Count insight</text>
+                                <text x="228" y="228" class="svg-tiny">Most actionable first drill</text>
+                            </svg>
+                        </div>
+
+                        <div class="callout-ribbon">
+                            <strong>Stronger entry point</strong>
+                            <p>
+                                The analyst starts from ranked segments with evidence, then drills into
+                                the mortality workflow for follow-up.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="slide" id="slide-3" data-title="From Signal to Explanation: Decomposition In The Same Workflow" aria-hidden="true">
+                <div class="slide-topline">
+                    <div class="slide-kicker">Slide 03</div>
+                    <div class="slide-count">Detection to explanation</div>
+                </div>
+
+                <div class="slide-grid">
+                    <div class="copy-panel">
+                        <div>
+                            <h1 class="slide-title">From Signal to Explanation: Decomposition In The Same Workflow</h1>
+                            <p class="slide-summary">
+                                The module keeps the follow-up analysis inside the same run, so the team
+                                can move from an elevated segment to an explanation without exporting work.
+                            </p>
+                        </div>
+
+                        <ul class="bullet-list">
+                            <li class="bullet" style="--delay: 0.08s;">
+                                <div class="bullet-marker"></div>
+                                <p class="bullet-text">
+                                    <strong>Once a segment is identified</strong>, the module keeps the
+                                    follow-up inside the same config-backed workflow.
+                                </p>
+                            </li>
+                            <li class="bullet" style="--delay: 0.16s;">
+                                <div class="bullet-marker"></div>
+                                <p class="bullet-text">
+                                    <strong>Treemap views show A/E intensity against policy count and face amount</strong>
+                                    so concentration and severity can be read together.
+                                </p>
+                            </li>
+                            <li class="bullet" style="--delay: 0.24s;">
+                                <div class="bullet-marker"></div>
+                                <p class="bullet-text">
+                                    <strong>Claim Analysis by Cause of Death</strong> adds claim tables and
+                                    COLA M1 stacked bars to explain what is driving elevated experience.
+                                </p>
+                            </li>
+                            <li class="bullet" style="--delay: 0.32s;">
+                                <div class="bullet-marker"></div>
+                                <p class="bullet-text">
+                                    <strong>The module moves from detection to decomposition</strong>
+                                    without exporting work to another spreadsheet.
+                                </p>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="visual-panel">
+                        <div class="visual-card">
+                            <div class="visual-head">
+                                <p class="visual-title">Treemap And Cause Of Death Decomposition</p>
+                                <div class="visual-badges">
+                                    <span class="visual-badge">Treemap intensity</span>
+                                    <span class="visual-badge">COLA M1</span>
+                                    <span class="visual-badge risk">Same workflow</span>
+                                </div>
+                            </div>
+
+                            <svg class="visual-svg" viewBox="0 0 720 420" role="img" aria-labelledby="mortalitySlide3Title mortalitySlide3Desc">
+                                <title id="mortalitySlide3Title">Treemap and cause-of-death explanation workflow</title>
+                                <desc id="mortalitySlide3Desc">A treemap on the left shows A/E intensity by exposure and amount, while a claim mix table and stacked bars on the right show COLA M1 composition.</desc>
+
+                                <rect x="34" y="38" width="322" height="344" rx="26" class="svg-card" />
+                                <text x="58" y="74" class="svg-label">A/E Treemap</text>
+                                <text x="58" y="96" class="svg-small">Intensity and exposure stay visible at the same time.</text>
+                                <rect x="58" y="122" width="112" height="116" rx="18" fill="rgba(201,79,79,0.82)" />
+                                <rect x="178" y="122" width="152" height="54" rx="18" fill="rgba(217,164,65,0.72)" />
+                                <rect x="178" y="184" width="72" height="54" rx="18" fill="rgba(35,95,154,0.66)" />
+                                <rect x="258" y="184" width="72" height="54" rx="18" fill="rgba(92,139,75,0.72)" />
+                                <rect x="58" y="246" width="102" height="106" rx="18" fill="rgba(217,164,65,0.58)" />
+                                <rect x="168" y="246" width="162" height="46" rx="18" fill="rgba(35,95,154,0.42)" />
+                                <rect x="168" y="300" width="162" height="52" rx="18" fill="rgba(47,124,122,0.48)" />
+                                <text x="76" y="146" fill="#fff" font-size="14" font-weight="700">A/E 1.86</text>
+                                <text x="76" y="166" fill="rgba(255,255,255,0.86)" font-size="12">High amount</text>
+                                <text x="196" y="148" class="svg-tiny">A/E 1.33</text>
+                                <text x="196" y="204" class="svg-tiny">A/E 0.96</text>
+                                <text x="276" y="204" class="svg-tiny">A/E 0.82</text>
+                                <text x="76" y="270" class="svg-tiny">A/E 1.21</text>
+                                <text x="188" y="270" class="svg-tiny">Count-heavy</text>
+                                <text x="188" y="324" class="svg-tiny">Amount-heavy</text>
+
+                                <path d="M356 210 C402 210, 406 210, 446 210" fill="none" stroke="#7f8da0" stroke-width="3" stroke-dasharray="8 8" />
+                                <polygon points="446,210 435,204 437,217" fill="#7f8da0" />
+                                <text x="364" y="194" class="svg-small">Explain the elevated block</text>
+
+                                <rect x="464" y="38" width="220" height="148" rx="24" class="svg-card" />
+                                <text x="486" y="72" class="svg-label">Claim Analysis by Cause of Death</text>
+                                <text x="486" y="94" class="svg-small">Claim table stays in the same workflow.</text>
+                                <line x1="486" y1="116" x2="662" y2="116" stroke="rgba(34,55,80,0.12)" />
+                                <text x="486" y="136" class="svg-tiny">Cancer</text>
+                                <text x="594" y="136" class="svg-tiny">42%</text>
+                                <text x="486" y="158" class="svg-tiny">Heart</text>
+                                <text x="594" y="158" class="svg-tiny">21%</text>
+                                <text x="486" y="180" class="svg-tiny">Respiratory</text>
+                                <text x="594" y="180" class="svg-tiny">15%</text>
+
+                                <rect x="464" y="208" width="220" height="174" rx="24" fill="rgba(247,244,239,0.82)" stroke="rgba(217,164,65,0.22)" />
+                                <text x="486" y="242" class="svg-label">COLA M1 Stacked Bars</text>
+                                <text x="486" y="264" class="svg-small">Claim mix explains what is driving the signal.</text>
+                                <g>
+                                    <rect x="490" y="300" width="152" height="18" rx="9" fill="rgba(35,95,154,0.12)" />
+                                    <rect x="490" y="300" width="68" height="18" rx="9" fill="#c94f4f" />
+                                    <rect x="558" y="300" width="44" height="18" rx="0" fill="#d9a441" />
+                                    <rect x="602" y="300" width="40" height="18" rx="0" fill="#2f7c7a" />
+                                    <text x="490" y="292" class="svg-tiny">Segment A</text>
+
+                                    <rect x="490" y="332" width="152" height="18" rx="9" fill="rgba(35,95,154,0.12)" />
+                                    <rect x="490" y="332" width="52" height="18" rx="9" fill="#c94f4f" />
+                                    <rect x="542" y="332" width="46" height="18" rx="0" fill="#d9a441" />
+                                    <rect x="588" y="332" width="54" height="18" rx="0" fill="#2f7c7a" />
+                                    <text x="490" y="324" class="svg-tiny">Segment B</text>
+                                </g>
+                                <circle cx="490" cy="366" r="5" fill="#c94f4f" />
+                                <circle cx="564" cy="366" r="5" fill="#d9a441" />
+                                <circle cx="634" cy="366" r="5" fill="#2f7c7a" />
+                                <text x="502" y="370" class="svg-tiny">Cancer</text>
+                                <text x="576" y="370" class="svg-tiny">Heart</text>
+                                <text x="646" y="370" class="svg-tiny">Respiratory</text>
+                            </svg>
+                        </div>
+
+                        <div class="callout-ribbon">
+                            <strong>Decomposition stays local</strong>
+                            <p>
+                                Treemap and COLA M1 views keep the explanation step inside the same
+                                mortality workflow.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <nav class="deck-controls" aria-label="Presentation controls">
+            <button class="nav-button" type="button" data-action="prev" aria-label="Go to previous slide">
+                Previous
+            </button>
+
+            <div class="pager" role="tablist" aria-label="Slides">
+                <button class="pager-button is-active" type="button" data-index="0" role="tab" aria-selected="true" aria-controls="slide-1">
+                    01
+                </button>
+                <button class="pager-button" type="button" data-index="1" role="tab" aria-selected="false" aria-controls="slide-2">
+                    02
+                </button>
+                <button class="pager-button" type="button" data-index="2" role="tab" aria-selected="false" aria-controls="slide-3">
+                    03
+                </button>
+            </div>
+
+            <button class="nav-button" type="button" data-action="next" aria-label="Go to next slide">
+                Next
+            </button>
+        </nav>
+    </div>
+
+    <script>
+        (function () {
+            const slides = Array.from(document.querySelectorAll(".slide"));
+            const pagerButtons = Array.from(document.querySelectorAll(".pager-button"));
+            const prevButton = document.querySelector('[data-action="prev"]');
+            const nextButton = document.querySelector('[data-action="next"]');
+            const progressBar = document.getElementById("progressBar");
+            const slideStatus = document.getElementById("slideStatus");
+
+            let activeIndex = 0;
+            let touchStartX = null;
+            let touchStartY = null;
+
+            function clamp(index) {
+                return Math.max(0, Math.min(index, slides.length - 1));
+            }
+
+            function hashFor(index) {
+                return "#slide-" + (index + 1);
+            }
+
+            function readHash() {
+                const match = window.location.hash.match(/slide-(\d+)/);
+                if (!match) {
+                    return 0;
+                }
+                return clamp(Number(match[1]) - 1);
+            }
+
+            function updateSlide(index, updateHash) {
+                activeIndex = clamp(index);
+
+                slides.forEach((slide, slideIndex) => {
+                    const isActive = slideIndex === activeIndex;
+                    slide.classList.toggle("is-active", isActive);
+                    slide.setAttribute("aria-hidden", String(!isActive));
+                });
+
+                pagerButtons.forEach((button, buttonIndex) => {
+                    const isActive = buttonIndex === activeIndex;
+                    button.classList.toggle("is-active", isActive);
+                    button.setAttribute("aria-selected", String(isActive));
+                });
+
+                prevButton.disabled = activeIndex === 0;
+                nextButton.disabled = activeIndex === slides.length - 1;
+                slideStatus.textContent = "Slide " + (activeIndex + 1) + " of " + slides.length;
+                progressBar.style.transform = "scaleX(" + ((activeIndex + 1) / slides.length) + ")";
+
+                if (updateHash) {
+                    history.replaceState(null, "", hashFor(activeIndex));
+                }
+            }
+
+            function goNext() {
+                updateSlide(activeIndex + 1, true);
+            }
+
+            function goPrev() {
+                updateSlide(activeIndex - 1, true);
+            }
+
+            prevButton.addEventListener("click", goPrev);
+            nextButton.addEventListener("click", goNext);
+
+            pagerButtons.forEach((button) => {
+                button.addEventListener("click", function () {
+                    updateSlide(Number(button.dataset.index), true);
+                });
+            });
+
+            document.addEventListener("keydown", function (event) {
+                const target = event.target;
+                const tag = target && target.tagName ? target.tagName.toLowerCase() : "";
+                if (tag === "input" || tag === "textarea" || tag === "select") {
+                    return;
+                }
+
+                if (event.key === "ArrowRight" || event.key === "PageDown" || event.key === " ") {
+                    event.preventDefault();
+                    goNext();
+                }
+
+                if (event.key === "ArrowLeft" || event.key === "PageUp") {
+                    event.preventDefault();
+                    goPrev();
+                }
+
+                if (event.key === "Home") {
+                    event.preventDefault();
+                    updateSlide(0, true);
+                }
+
+                if (event.key === "End") {
+                    event.preventDefault();
+                    updateSlide(slides.length - 1, true);
+                }
+            });
+
+            document.addEventListener("touchstart", function (event) {
+                const touch = event.changedTouches[0];
+                touchStartX = touch.clientX;
+                touchStartY = touch.clientY;
+            }, { passive: true });
+
+            document.addEventListener("touchend", function (event) {
+                if (touchStartX === null || touchStartY === null) {
+                    return;
+                }
+
+                const touch = event.changedTouches[0];
+                const deltaX = touch.clientX - touchStartX;
+                const deltaY = touch.clientY - touchStartY;
+
+                if (Math.abs(deltaX) > 60 && Math.abs(deltaX) > Math.abs(deltaY)) {
+                    if (deltaX < 0) {
+                        goNext();
+                    } else {
+                        goPrev();
+                    }
+                }
+
+                touchStartX = null;
+                touchStartY = null;
+            }, { passive: true });
+
+            window.addEventListener("hashchange", function () {
+                updateSlide(readHash(), false);
+            });
+
+            updateSlide(readHash(), false);
+        })();
+    </script>
+</body>
+</html>

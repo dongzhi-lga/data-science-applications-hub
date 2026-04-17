@@ -113,7 +113,7 @@
             height: 100%;
             width: 100%;
             transform-origin: left center;
-            transform: scaleX(0.3334);
+            transform: scaleX(0.25);
             background: linear-gradient(90deg, var(--blue), #6d9fcc);
             transition: transform var(--transition);
         }
@@ -639,7 +639,7 @@
                     <span class="brand-chip">Data Science Applications Hub</span>
                     <div class="brand-title">Binary Feature Mortality A/E Strategy Deck</div>
                 </div>
-                <div class="meta-chip" id="slideStatus" aria-live="polite">Slide 1 of 3</div>
+                <div class="meta-chip" id="slideStatus" aria-live="polite">Slide 1 of 4</div>
             </div>
             <div class="progress-shell" aria-hidden="true">
                 <div class="progress-bar" id="progressBar"></div>
@@ -988,9 +988,147 @@
                 </div>
             </section>
 
-            <section class="slide" id="slide-3" data-title="The Bigger Picture: The Data Science Applications Hub" aria-hidden="true">
+            <section class="slide" id="slide-3" data-title="The Next Move: A Purpose-Specific Triage Copilot" aria-hidden="true">
                 <div class="slide-topline">
                     <div class="slide-kicker">Slide 03</div>
+                    <div class="slide-count">Guided AI actions for triage, not open-ended chat</div>
+                </div>
+
+                <div class="slide-grid">
+                    <div class="copy-panel">
+                        <div>
+                            <h1 class="slide-title">The Next Move: A Purpose-Specific Triage Copilot</h1>
+                            <p class="slide-summary">
+                                AI belongs here first because the task is narrow, repetitive, and
+                                decision-oriented: review many rules quickly and decide what deserves
+                                action, monitoring, or a clearer summary.
+                            </p>
+                        </div>
+
+                        <ul class="bullet-list">
+                            <li class="bullet" style="--delay: 0.08s;">
+                                <div class="bullet-marker"></div>
+                                <p class="bullet-text">
+                                    <strong>This is the right first AI use case</strong> because the
+                                    judgment is repetitive, the benefit is obvious, and the risk of
+                                    over-interpretation is real.
+                                </p>
+                            </li>
+                            <li class="bullet" style="--delay: 0.16s;">
+                                <div class="bullet-marker"></div>
+                                <p class="bullet-text">
+                                    <strong>Version one is guided actions, not open chat:</strong>
+                                    Prioritize top rules, Explain selected rule, and Draft follow-up
+                                    summary.
+                                </p>
+                            </li>
+                            <li class="bullet" style="--delay: 0.24s;">
+                                <div class="bullet-marker"></div>
+                                <p class="bullet-text">
+                                    <strong>The backend flow stays disciplined:</strong> evidence packet
+                                    to action-specific instruction to structured output to app-ready UI
+                                    cards.
+                                </p>
+                            </li>
+                            <li class="bullet bullet-risk" style="--delay: 0.32s;">
+                                <div class="bullet-marker"></div>
+                                <p class="bullet-text">
+                                    <strong>The guardrails matter as much as the model:</strong> prefer
+                                    caution over drama, separate action from monitoring, and do not
+                                    overclaim thin evidence.
+                                </p>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="visual-panel">
+                        <div class="visual-card">
+                            <div class="visual-head">
+                                <p class="visual-title">Purpose-Specific Copilot Flow</p>
+                                <div class="visual-badges">
+                                    <span class="visual-badge">Not a chatbot</span>
+                                    <span class="visual-badge">Phase 1 MVP</span>
+                                    <span class="visual-badge risk">Triage copilot</span>
+                                </div>
+                            </div>
+
+                            <svg class="visual-svg" viewBox="0 0 720 420" role="img" aria-labelledby="slide3Title slide3Desc">
+                                <title id="slide3Title">AI copilot flow for Binary Feature Mortality A/E</title>
+                                <desc id="slide3Desc">Three guided actions feed a structured evidence packet, which flows into a purpose-specific AI triage step and then renders app-ready outputs such as top candidates, caveats, and meeting summary cards.</desc>
+
+                                <rect x="26" y="26" width="668" height="58" rx="20" fill="rgba(21,32,51,0.88)" />
+                                <text x="48" y="52" fill="#f8fbff" font-size="16" font-weight="700">Purpose-specific copilot, not a general analytics chatbot.</text>
+                                <text x="48" y="72" fill="rgba(248,251,255,0.80)" font-size="13">Focused buttons, constrained context, structured outputs, and analyst-style caution.</text>
+
+                                <g stroke="rgba(35,95,154,0.18)" stroke-width="3">
+                                    <line x1="236" y1="155" x2="308" y2="194" />
+                                    <line x1="236" y1="230" x2="308" y2="222" />
+                                    <line x1="236" y1="305" x2="308" y2="250" />
+                                    <line x1="466" y1="220" x2="538" y2="138" />
+                                    <line x1="466" y1="220" x2="538" y2="220" />
+                                    <line x1="466" y1="220" x2="538" y2="302" />
+                                </g>
+
+                                <g>
+                                    <rect x="54" y="112" width="184" height="52" rx="18" class="svg-node highlight" />
+                                    <text x="78" y="143" class="svg-label">Prioritize top rules</text>
+                                    <text x="78" y="159" class="svg-small">Action, watchlist, weak evidence</text>
+
+                                    <rect x="54" y="188" width="184" height="52" rx="18" class="svg-node" />
+                                    <text x="78" y="219" class="svg-label">Explain selected rule</text>
+                                    <text x="78" y="235" class="svg-small">Business-language interpretation</text>
+
+                                    <rect x="54" y="264" width="184" height="52" rx="18" class="svg-node future" />
+                                    <text x="78" y="295" class="svg-label">Draft follow-up summary</text>
+                                    <text x="78" y="311" class="svg-small">Meeting bullets and caveats</text>
+                                </g>
+
+                                <g>
+                                    <rect x="308" y="126" width="160" height="188" rx="24" class="svg-node highlight" />
+                                    <text x="336" y="156" class="svg-label">Evidence Packet</text>
+                                    <text x="336" y="178" class="svg-small">Visible rules</text>
+                                    <text x="336" y="198" class="svg-small">Current filters</text>
+                                    <text x="336" y="218" class="svg-small">CI level + significance</text>
+                                    <text x="336" y="238" class="svg-small">Hit count, claim count</text>
+                                    <text x="336" y="258" class="svg-small">A/E, CI bounds, category</text>
+                                    <text x="336" y="278" class="svg-small">Pinned or selected context</text>
+                                    <rect x="324" y="290" width="126" height="26" rx="13" fill="rgba(201,79,79,0.10)" stroke="rgba(201,79,79,0.16)" />
+                                    <text x="341" y="307" class="svg-emphasis" style="font-size:12px;">Only needed fields</text>
+                                </g>
+
+                                <g>
+                                    <rect x="538" y="98" width="136" height="66" rx="18" class="svg-card" />
+                                    <text x="558" y="126" class="svg-label">Top candidates</text>
+                                    <text x="558" y="146" class="svg-small">Act now vs watchlist</text>
+
+                                    <rect x="538" y="186" width="136" height="66" rx="18" class="svg-card" />
+                                    <text x="558" y="214" class="svg-label">Caveats</text>
+                                    <text x="558" y="234" class="svg-small">Thin evidence, wide intervals</text>
+
+                                    <rect x="538" y="274" width="136" height="66" rx="18" class="svg-card" />
+                                    <text x="558" y="302" class="svg-label">Summary output</text>
+                                    <text x="558" y="322" class="svg-small">Analyst notes, meeting bullets</text>
+                                </g>
+
+                                <rect x="260" y="354" width="266" height="30" rx="15" fill="rgba(35,95,154,0.08)" stroke="rgba(35,95,154,0.16)" />
+                                <text x="279" y="373" class="svg-small">Button click to backend to AI call to safe UI render</text>
+                            </svg>
+                        </div>
+
+                        <div class="callout-ribbon">
+                            <strong>Product feeling</strong>
+                            <p>
+                                The AI should feel like a careful triage reviewer sitting beside the
+                                analyst: useful, disciplined, and explicitly aware of weak evidence.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="slide" id="slide-4" data-title="The Bigger Picture: The Data Science Applications Hub" aria-hidden="true">
+                <div class="slide-topline">
+                    <div class="slide-kicker">Slide 04</div>
                     <div class="slide-count">From standalone scripts to a cohesive analytical platform</div>
                 </div>
 
@@ -1000,7 +1138,8 @@
                             <h1 class="slide-title">The Bigger Picture: The Data Science Applications Hub</h1>
                             <p class="slide-summary">
                                 The long-term gain is not one more script. It is a shared operating
-                                surface where domain expertise compounds across modules.
+                                surface where domain expertise compounds across modules and proven
+                                copilot patterns can be reused intentionally.
                             </p>
                         </div>
 
@@ -1030,8 +1169,9 @@
                             <li class="bullet" style="--delay: 0.32s;">
                                 <div class="bullet-marker"></div>
                                 <p class="bullet-text">
-                                    <strong>The result is more leverage</strong> across underwriting,
-                                    post-issue audit, and actuarial innovation workflows.
+                                    <strong>This copilot pattern can become a template</strong> for future
+                                    module-specific intelligence across underwriting, post-issue audit,
+                                    and actuarial workflows.
                                 </p>
                             </li>
                         </ul>
@@ -1048,14 +1188,14 @@
                                 </div>
                             </div>
 
-                            <svg class="visual-svg" viewBox="0 0 720 420" role="img" aria-labelledby="slide3Title slide3Desc">
-                                <title id="slide3Title">Data Science Applications Hub platform map</title>
-                                <desc id="slide3Desc">A hub-and-spoke platform map shows central setup connected to the existing mortality module, the binary feature module, and future modules, with a banner explaining that AI-assisted development shifts the bottleneck toward domain expertise.</desc>
+                            <svg class="visual-svg" viewBox="0 0 720 420" role="img" aria-labelledby="slide4Title slide4Desc">
+                                <title id="slide4Title">Data Science Applications Hub platform map</title>
+                                <desc id="slide4Desc">A hub-and-spoke platform map shows central setup connected to the existing mortality module, the binary feature module, and future modules, with a banner explaining that AI-assisted development shifts the bottleneck toward domain expertise and reusable copilot patterns.</desc>
 
                                 <rect x="36" y="34" width="648" height="70" rx="22" fill="rgba(21,32,51,0.88)" />
                                 <text x="58" y="64" fill="#f8fbff" font-size="16" font-weight="700">AI-assisted development shifts the bottleneck.</text>
                                 <text x="58" y="88" fill="rgba(248,251,255,0.78)" font-size="13">
-                                    Less time on dashboard boilerplate. More leverage from domain expertise, data comprehension, and strategic planning.
+                                    Less time on dashboard boilerplate. More leverage from domain expertise, data comprehension, strategic planning, and reusable copilot patterns.
                                 </text>
 
                                 <g stroke="rgba(35,95,154,0.18)" stroke-width="3">
@@ -1089,7 +1229,7 @@
                                     <rect x="82" y="286" width="192" height="88" rx="24" class="svg-node highlight" />
                                     <text x="108" y="320" class="svg-label">Binary Feature</text>
                                     <text x="108" y="344" class="svg-label">Mortality A/E</text>
-                                    <text x="108" y="364" class="svg-small">Rule triage, compare, and pin follow-up</text>
+                                    <text x="108" y="364" class="svg-small">Rule triage, compare, pin, and copilot follow-up</text>
                                 </g>
 
                                 <g>
@@ -1100,7 +1240,7 @@
                                 </g>
 
                                 <path d="M274 334 C314 356, 386 356, 446 330" fill="none" stroke="#d9a441" stroke-width="2.6" stroke-dasharray="8 7" />
-                                <text x="286" y="386" class="svg-small">From fragmented scripts to a cohesive mega-product</text>
+                                <text x="276" y="386" class="svg-small">From fragmented scripts to a cohesive mega-product and copilot template</text>
                             </svg>
                         </div>
 
@@ -1108,7 +1248,8 @@
                             <strong>Platform outcome</strong>
                             <p>
                                 Centralizing modules inside the hub compounds delivery speed and
-                                analytical power instead of recreating bespoke scripts for each question.
+                                analytical power instead of recreating bespoke scripts for each
+                                question, and this copilot pattern can scale with it.
                             </p>
                         </div>
                     </div>
@@ -1130,6 +1271,9 @@
                 </button>
                 <button class="pager-button" type="button" data-index="2" role="tab" aria-selected="false" aria-controls="slide-3">
                     03
+                </button>
+                <button class="pager-button" type="button" data-index="3" role="tab" aria-selected="false" aria-controls="slide-4">
+                    04
                 </button>
             </div>
 

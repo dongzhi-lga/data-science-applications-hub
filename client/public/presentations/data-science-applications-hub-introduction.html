@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Data Science Applications Hub Introduction</title>
+    <style>
+        :root {
+            --bg-1: #edf3f9;
+            --bg-2: #f7f4ef;
+            --panel: rgba(255, 255, 255, 0.82);
+            --panel-strong: rgba(255, 255, 255, 0.92);
+            --line: rgba(58, 79, 104, 0.15);
+            --ink: #152033;
+            --muted: #5b6878;
+            --blue: #235f9a;
+            --teal: #2f7c7a;
+            --gold: #d9a441;
+            --risk: #c94f4f;
+            --shadow: 0 24px 60px rgba(22, 33, 48, 0.16);
+            --radius-xl: 30px;
+            --radius-lg: 22px;
+            --radius-md: 16px;
+            --transition: 340ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            min-height: 100%;
+            margin: 0;
+        }
+
+        body {
+            font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top left, rgba(123, 168, 214, 0.22), transparent 28%),
+                radial-gradient(circle at bottom right, rgba(217, 164, 65, 0.16), transparent 32%),
+                linear-gradient(140deg, var(--bg-1), var(--bg-2));
+        }
+
+        button {
+            font: inherit;
+        }
+
+        .deck-app {
+            min-height: 100dvh;
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            gap: 20px;
+            padding: 24px;
+        }
+
+        .deck-header {
+            width: min(92vw, 1440px);
+            margin: 0 auto;
+            display: grid;
+            gap: 14px;
+        }
+
+        .deck-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .brand-cluster {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .brand-chip,
+        .meta-chip {
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.74);
+            border: 1px solid rgba(255, 255, 255, 0.85);
+            color: var(--muted);
+            font-size: 0.85rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .brand-title {
+            font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+            font-size: clamp(1.2rem, 1.4vw + 0.8rem, 1.8rem);
+            letter-spacing: 0.01em;
+        }
+
+        .progress-shell {
+            height: 4px;
+            width: 100%;
+            background: rgba(34, 55, 80, 0.12);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 100%;
+            transform-origin: left center;
+            transform: scaleX(0.5);
+            background: linear-gradient(90deg, var(--blue), #6d9fcc);
+            transition: transform var(--transition);
+        }
+
+        .deck-stage {
+            width: min(92vw, calc((100dvh - 220px) * 16 / 9), 1440px);
+            aspect-ratio: 16 / 9;
+            max-height: calc(100dvh - 220px);
+            margin: 0 auto;
+            position: relative;
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+            background:
+                linear-gradient(160deg, rgba(255, 255, 255, 0.86), rgba(247, 249, 252, 0.94)),
+                linear-gradient(140deg, rgba(221, 233, 244, 0.7), rgba(253, 248, 239, 0.78));
+            border: 1px solid rgba(255, 255, 255, 0.92);
+            box-shadow: var(--shadow);
+            isolation: isolate;
+        }
+
+        .deck-stage::before,
+        .deck-stage::after {
+            content: "";
+            position: absolute;
+            border-radius: 999px;
+            filter: blur(20px);
+            opacity: 0.75;
+            z-index: 0;
+        }
+
+        .deck-stage::before {
+            width: 260px;
+            height: 260px;
+            top: -60px;
+            right: -40px;
+            background: rgba(35, 95, 154, 0.12);
+        }
+
+        .deck-stage::after {
+            width: 220px;
+            height: 220px;
+            bottom: -70px;
+            left: -40px;
+            background: rgba(217, 164, 65, 0.14);
+        }
+
+        .slide {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            grid-template-rows: auto 1fr;
+            gap: 18px;
+            padding: 38px 42px 34px;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateX(38px) scale(0.985);
+            transition:
+                opacity var(--transition),
+                transform var(--transition);
+            z-index: 1;
+        }
+
+        .slide.is-active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateX(0) scale(1);
+        }
+
+        .slide-topline {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .slide-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--blue);
+            font-size: 0.88rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .slide-kicker::before {
+            content: "";
+            width: 36px;
+            height: 1px;
+            background: currentColor;
+        }
+
+        .slide-count {
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            color: var(--muted);
+            background: rgba(255, 255, 255, 0.68);
+            font-size: 0.85rem;
+        }
+
+        .slide-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 0.98fr) minmax(400px, 1.02fr);
+            gap: 28px;
+            min-height: 0;
+        }
+
+        .copy-panel,
+        .visual-panel {
+            min-height: 0;
+            position: relative;
+        }
+
+        .copy-panel {
+            display: grid;
+            gap: 20px;
+            align-content: start;
+        }
+
+        .slide-title {
+            margin: 0;
+            font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+            font-size: clamp(2rem, 2.4vw + 0.9rem, 3.4rem);
+            line-height: 1.03;
+            letter-spacing: -0.02em;
+            max-width: 12ch;
+        }
+
+        .slide-summary {
+            margin: 0;
+            max-width: 54ch;
+            color: var(--muted);
+            font-size: clamp(1rem, 0.45vw + 0.9rem, 1.15rem);
+            line-height: 1.55;
+        }
+
+        .bullet-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            gap: 14px;
+        }
+
+        .bullet {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 14px;
+            padding: 16px 18px;
+            border-radius: var(--radius-md);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(247, 250, 252, 0.82));
+            border: 1px solid rgba(34, 55, 80, 0.08);
+            box-shadow: 0 14px 30px rgba(21, 32, 51, 0.06);
+            opacity: 0;
+            transform: translateY(18px);
+            transition:
+                opacity var(--transition),
+                transform var(--transition);
+            transition-delay: var(--delay, 0s);
+        }
+
+        .slide.is-active .bullet,
+        .slide.is-active .visual-card,
+        .slide.is-active .callout-ribbon {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .bullet-marker {
+            width: 12px;
+            height: 12px;
+            border-radius: 999px;
+            margin-top: 6px;
+            background: linear-gradient(135deg, var(--blue), #77a8d4);
+            box-shadow: 0 0 0 6px rgba(35, 95, 154, 0.12);
+        }
+
+        .bullet-text {
+            margin: 0;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .bullet-text strong {
+            color: var(--ink);
+        }
+
+        .visual-card {
+            height: 100%;
+            display: grid;
+            grid-template-rows: auto 1fr;
+            gap: 14px;
+            padding: 20px;
+            border-radius: 24px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(247, 250, 252, 0.74));
+            border: 1px solid rgba(34, 55, 80, 0.08);
+            box-shadow: 0 18px 38px rgba(21, 32, 51, 0.09);
+            opacity: 0;
+            transform: translateY(18px);
+            transition:
+                opacity var(--transition),
+                transform var(--transition);
+            transition-delay: 0.28s;
+        }
+
+        .visual-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .visual-title {
+            margin: 0;
+            font-size: 0.9rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .visual-badges {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .visual-badge {
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(35, 95, 154, 0.09);
+            border: 1px solid rgba(35, 95, 154, 0.12);
+            color: var(--blue);
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+
+        .visual-badge.future {
+            background: rgba(217, 164, 65, 0.12);
+            border-color: rgba(217, 164, 65, 0.18);
+            color: #906417;
+        }
+
+        .visual-svg {
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+            display: block;
+            border-radius: 18px;
+            background:
+                linear-gradient(180deg, rgba(250, 252, 253, 0.84), rgba(239, 244, 248, 0.94)),
+                linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.56));
+            border: 1px solid rgba(34, 55, 80, 0.08);
+        }
+
+        .callout-ribbon {
+            position: absolute;
+            right: 16px;
+            bottom: 16px;
+            max-width: 286px;
+            padding: 14px 16px;
+            border-radius: 18px;
+            background: rgba(21, 32, 51, 0.88);
+            color: #f8fbff;
+            box-shadow: 0 16px 34px rgba(21, 32, 51, 0.22);
+            opacity: 0;
+            transform: translateY(18px);
+            transition:
+                opacity var(--transition),
+                transform var(--transition);
+            transition-delay: 0.42s;
+        }
+
+        .callout-ribbon strong {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+            letter-spacing: 0.04em;
+        }
+
+        .callout-ribbon p {
+            margin: 0;
+            font-size: 0.9rem;
+            line-height: 1.45;
+            color: rgba(248, 251, 255, 0.84);
+        }
+
+        .deck-controls {
+            width: min(92vw, 1440px);
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .nav-button {
+            appearance: none;
+            border: 1px solid rgba(34, 55, 80, 0.1);
+            background: rgba(255, 255, 255, 0.82);
+            color: var(--ink);
+            border-radius: 999px;
+            padding: 12px 18px;
+            min-width: 118px;
+            cursor: pointer;
+            transition:
+                transform 180ms ease,
+                border-color 180ms ease,
+                background 180ms ease;
+        }
+
+        .nav-button:hover:not(:disabled),
+        .pager-button:hover {
+            transform: translateY(-1px);
+            border-color: rgba(35, 95, 154, 0.28);
+            background: rgba(255, 255, 255, 0.96);
+        }
+
+        .nav-button:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .pager {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .pager-button {
+            appearance: none;
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            border: 1px solid rgba(34, 55, 80, 0.1);
+            background: rgba(255, 255, 255, 0.76);
+            color: var(--muted);
+            cursor: pointer;
+            transition:
+                transform 180ms ease,
+                background 180ms ease,
+                color 180ms ease,
+                border-color 180ms ease;
+        }
+
+        .pager-button.is-active {
+            background: linear-gradient(180deg, #235f9a, #1b4f82);
+            color: #ffffff;
+            border-color: transparent;
+            box-shadow: 0 16px 30px rgba(35, 95, 154, 0.22);
+        }
+
+        .svg-label {
+            font-size: 0.95rem;
+            fill: var(--ink);
+            font-weight: 600;
+        }
+
+        .svg-small {
+            font-size: 0.8rem;
+            fill: var(--muted);
+        }
+
+        .svg-tiny {
+            font-size: 0.72rem;
+            fill: var(--muted);
+        }
+
+        .svg-card {
+            fill: rgba(255, 255, 255, 0.92);
+            stroke: rgba(34, 55, 80, 0.08);
+            stroke-width: 1;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .reveal-node {
+            opacity: 0;
+        }
+
+        .slide.is-active .reveal-node {
+            animation: fadeUp 520ms ease forwards;
+            animation-delay: var(--delay, 0s);
+        }
+
+        @media (max-width: 1100px) {
+            .deck-stage {
+                width: min(94vw, calc((100dvh - 220px) * 16 / 9));
+            }
+
+            .slide {
+                padding: 30px 30px 28px;
+            }
+
+            .slide-grid {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto minmax(280px, 1fr);
+            }
+
+            .slide-title {
+                max-width: none;
+            }
+
+            .visual-panel {
+                min-height: 280px;
+            }
+        }
+
+        @media (max-width: 760px), (max-height: 760px) {
+            .deck-app {
+                padding: 14px;
+                gap: 14px;
+            }
+
+            .deck-stage {
+                width: 100%;
+                aspect-ratio: auto;
+                max-height: none;
+                min-height: calc(100dvh - 200px);
+            }
+
+            .slide {
+                padding: 24px 20px 22px;
+                overflow: auto;
+            }
+
+            .deck-header,
+            .deck-controls {
+                width: 100%;
+            }
+
+            .deck-controls {
+                justify-content: center;
+            }
+
+            .nav-button {
+                min-width: 0;
+                flex: 1 1 140px;
+            }
+
+            .pager {
+                order: -1;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="deck-app">
+        <header class="deck-header">
+            <div class="deck-meta">
+                <div class="brand-cluster">
+                    <span class="brand-chip">Internal Platform Story</span>
+                    <div class="brand-title">Data Science Applications Hub Introduction</div>
+                </div>
+                <div class="meta-chip" id="slideStatus" aria-live="polite">Slide 1 of 2</div>
+            </div>
+            <div class="progress-shell" aria-hidden="true">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+        </header>
+
+        <main class="deck-stage" aria-label="Data Science Applications Hub introduction presentation">
+            <section class="slide is-active" id="slide-1" data-title="Why The Hub Exists: One Shared Analytical Operating Surface">
+                <div class="slide-topline">
+                    <div class="slide-kicker">Slide 01</div>
+                    <div class="slide-count">Current operating surface</div>
+                </div>
+
+                <div class="slide-grid">
+                    <div class="copy-panel">
+                        <div>
+                            <h1 class="slide-title">Why The Hub Exists: One Shared Analytical Operating Surface</h1>
+                            <p class="slide-summary">
+                                The hub is not just a container for tools. It is the shared operating
+                                surface that keeps setup effort reusable across active modules.
+                            </p>
+                        </div>
+
+                        <ul class="bullet-list">
+                            <li class="bullet" style="--delay: 0.08s;">
+                                <div class="bullet-marker"></div>
+                                <p class="bullet-text">
+                                    <strong>The Data Science Applications Hub replaces separate single-purpose tools</strong>
+                                    with one frontend, one backend, and one shared configuration and storage model.
+                                </p>
+                            </li>
+                            <li class="bullet" style="--delay: 0.16s;">
+                                <div class="bullet-marker"></div>
+                                <p class="bullet-text">
+                                    <strong>Central Setup lets teams select a module, upload once, infer schema, complete module-specific mapping, and save reusable configurations.</strong>
+                                </p>
+                            </li>
+                            <li class="bullet" style="--delay: 0.24s;">
+                                <div class="bullet-marker"></div>
+                                <p class="bullet-text">
+                                    <strong>Saved configurations reopen directly into the correct analysis page</strong>
+                                    so setup effort compounds instead of restarting.
+                                </p>
+                            </li>
+                            <li class="bullet" style="--delay: 0.32s;">
+                                <div class="bullet-marker"></div>
+                                <p class="bullet-text">
+                                    <strong>The current active modules already prove the pattern:</strong>
+                                    Experience Study Mortality A/E and Binary Feature Mortality A/E.
+                                </p>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="visual-panel">
+                        <div class="visual-card">
+                            <div class="visual-head">
+                                <p class="visual-title">Operating Flow</p>
+                                <div class="visual-badges">
+                                    <span class="visual-badge">Central Setup</span>
+                                    <span class="visual-badge">Saved configs</span>
+                                    <span class="visual-badge">Active modules</span>
+                                </div>
+                            </div>
+
+                            <svg class="visual-svg" viewBox="0 0 720 420" role="img" aria-labelledby="hubSlide1Title hubSlide1Desc">
+                                <title id="hubSlide1Title">Operating flow from central setup to active modules</title>
+                                <desc id="hubSlide1Desc">A staggered flow map shows Central Setup feeding upload, saved configurations, and the two current modules on top of a shared foundation.</desc>
+
+                                <g class="reveal-node" style="--delay: 0.08s;">
+                                    <rect x="40" y="128" width="152" height="104" rx="24" class="svg-card" />
+                                    <text x="68" y="168" class="svg-label">Central Setup</text>
+                                    <text x="68" y="192" class="svg-small">Choose module</text>
+                                    <text x="68" y="212" class="svg-small">Map columns</text>
+                                </g>
+
+                                <g class="reveal-node" style="--delay: 0.18s;">
+                                    <rect x="228" y="128" width="124" height="104" rx="24" fill="rgba(219,233,246,0.72)" stroke="rgba(35,95,154,0.16)" />
+                                    <text x="258" y="168" class="svg-label">Upload</text>
+                                    <text x="258" y="192" class="svg-small">CSV, Excel,</text>
+                                    <text x="258" y="212" class="svg-small">or Parquet</text>
+                                </g>
+
+                                <g class="reveal-node" style="--delay: 0.28s;">
+                                    <rect x="388" y="108" width="156" height="144" rx="24" fill="rgba(247,244,239,0.84)" stroke="rgba(217,164,65,0.18)" />
+                                    <text x="416" y="148" class="svg-label">Saved Configurations</text>
+                                    <text x="416" y="172" class="svg-small">Reusable dataset setup</text>
+                                    <rect x="416" y="192" width="100" height="20" rx="10" fill="rgba(35,95,154,0.11)" />
+                                    <rect x="416" y="220" width="86" height="20" rx="10" fill="rgba(47,124,122,0.11)" />
+                                    <text x="431" y="206" class="svg-tiny">Schema loaded</text>
+                                    <text x="431" y="234" class="svg-tiny">Mappings saved</text>
+                                </g>
+
+                                <g class="reveal-node" style="--delay: 0.40s;">
+                                    <rect x="570" y="64" width="114" height="96" rx="24" fill="rgba(255,255,255,0.94)" stroke="rgba(34,55,80,0.1)" />
+                                    <text x="590" y="102" class="svg-label">Experience Study</text>
+                                    <text x="590" y="124" class="svg-small">Mortality A/E</text>
+                                </g>
+
+                                <g class="reveal-node" style="--delay: 0.52s;">
+                                    <rect x="570" y="196" width="114" height="96" rx="24" fill="rgba(219,233,246,0.84)" stroke="rgba(35,95,154,0.18)" />
+                                    <text x="592" y="234" class="svg-label">Binary Feature</text>
+                                    <text x="590" y="256" class="svg-small">Mortality A/E</text>
+                                </g>
+
+                                <path d="M192 180 L228 180" stroke="#7f8da0" stroke-width="3" />
+                                <polygon points="228,180 218,174 218,186" fill="#7f8da0" />
+                                <path d="M352 180 L388 180" stroke="#7f8da0" stroke-width="3" />
+                                <polygon points="388,180 378,174 378,186" fill="#7f8da0" />
+                                <path d="M544 148 C560 132, 558 120, 570 112" stroke="#7f8da0" stroke-width="3" fill="none" />
+                                <polygon points="570,112 560,108 563,120" fill="#7f8da0" />
+                                <path d="M544 212 C560 220, 558 232, 570 244" stroke="#7f8da0" stroke-width="3" fill="none" />
+                                <polygon points="570,244 561,236 558,248" fill="#7f8da0" />
+
+                                <g class="reveal-node" style="--delay: 0.60s;">
+                                    <rect x="64" y="322" width="622" height="44" rx="22" fill="rgba(21,32,51,0.88)" />
+                                    <text x="94" y="350" fill="#f8fbff" font-size="14" font-weight="700">Shared frontend, backend, and config-backed storage make the operating surface reusable.</text>
+                                </g>
+                            </svg>
+                        </div>
+
+                        <div class="callout-ribbon">
+                            <strong>Today’s proof point</strong>
+                            <p>
+                                The hub already reduces workflow fragmentation by centralizing setup and
+                                routing across the active modules.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="slide" id="slide-2" data-title="Where The Hub Goes: A Reusable Actuarial Applications Platform" aria-hidden="true">
+                <div class="slide-topline">
+                    <div class="slide-kicker">Slide 02</div>
+                    <div class="slide-count">Future-state platform</div>
+                </div>
+
+                <div class="slide-grid">
+                    <div class="copy-panel">
+                        <div>
+                            <h1 class="slide-title">Where The Hub Goes: A Reusable Actuarial Applications Platform</h1>
+                            <p class="slide-summary">
+                                The long-term value is the pattern itself: shared foundations that can
+                                support new modules and future copilot-style workflows without starting over.
+                            </p>
+                        </div>
+
+                        <ul class="bullet-list">
+                            <li class="bullet" style="--delay: 0.08s;">
+                                <div class="bullet-marker"></div>
+                                <p class="bullet-text">
+                                    <strong>The point is not two disconnected applications;</strong>
+                                    it is a platform pattern that new actuarial and underwriting workflows can plug into.
+                                </p>
+                            </li>
+                            <li class="bullet" style="--delay: 0.16s;">
+                                <div class="bullet-marker"></div>
+                                <p class="bullet-text">
+                                    <strong>AI-assisted delivery makes frontend construction cheaper,</strong>
+                                    so the scarce resource shifts toward domain expertise, data comprehension, and strategic planning.
+                                </p>
+                            </li>
+                            <li class="bullet" style="--delay: 0.24s;">
+                                <div class="bullet-marker"></div>
+                                <p class="bullet-text">
+                                    <strong>Shared registry, routing, and config-backed storage</strong>
+                                    let new modules inherit the operating surface instead of starting from zero.
+                                </p>
+                            </li>
+                            <li class="bullet" style="--delay: 0.32s;">
+                                <div class="bullet-marker"></div>
+                                <p class="bullet-text">
+                                    <strong>The destination is a cohesive mega-product</strong> for exploration,
+                                    triage, follow-up, and future copilot-style workflows rather than a folder of scripts.
+                                </p>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="visual-panel">
+                        <div class="visual-card">
+                            <div class="visual-head">
+                                <p class="visual-title">Platform Map</p>
+                                <div class="visual-badges">
+                                    <span class="visual-badge">Shared registry</span>
+                                    <span class="visual-badge">Reusable modules</span>
+                                    <span class="visual-badge future">Future agent layer</span>
+                                </div>
+                            </div>
+
+                            <svg class="visual-svg" viewBox="0 0 720 420" role="img" aria-labelledby="hubSlide2Title hubSlide2Desc">
+                                <title id="hubSlide2Title">Future-state platform map with modules and agent layer</title>
+                                <desc id="hubSlide2Desc">A central applications hub connects to current modules, future modules, and a directional layer for module-specific LLM agents or copilot skills.</desc>
+
+                                <rect x="34" y="30" width="652" height="66" rx="22" fill="rgba(21,32,51,0.88)" />
+                                <text x="58" y="58" fill="#f8fbff" font-size="16" font-weight="700">AI-assisted delivery changes the bottleneck.</text>
+                                <text x="58" y="82" fill="rgba(248,251,255,0.78)" font-size="13">Less time on interface boilerplate. More leverage from domain expertise, data comprehension, and strategic planning.</text>
+
+                                <rect x="248" y="144" width="224" height="122" rx="28" fill="rgba(219,233,246,0.92)" stroke="rgba(35,95,154,0.22)" />
+                                <text x="286" y="182" class="svg-label">Data Science</text>
+                                <text x="286" y="206" class="svg-label">Applications Hub</text>
+                                <text x="286" y="234" class="svg-small">Shared setup, registry, routing,</text>
+                                <text x="286" y="254" class="svg-small">and config-backed storage</text>
+
+                                <g stroke="rgba(35,95,154,0.18)" stroke-width="3">
+                                    <line x1="248" y1="196" x2="106" y2="128" />
+                                    <line x1="248" y1="220" x2="106" y2="296" />
+                                    <line x1="472" y1="196" x2="614" y2="128" />
+                                    <line x1="472" y1="220" x2="614" y2="296" />
+                                    <line x1="360" y1="266" x2="360" y2="336" />
+                                </g>
+
+                                <rect x="44" y="92" width="160" height="72" rx="22" class="svg-card" />
+                                <text x="70" y="122" class="svg-label">Experience Study</text>
+                                <text x="70" y="144" class="svg-small">Mortality A/E</text>
+
+                                <rect x="44" y="260" width="160" height="72" rx="22" fill="rgba(255,255,255,0.96)" stroke="rgba(34,55,80,0.1)" />
+                                <text x="70" y="290" class="svg-label">Binary Feature</text>
+                                <text x="70" y="312" class="svg-small">Mortality A/E</text>
+
+                                <rect x="516" y="92" width="164" height="72" rx="22" fill="rgba(247,244,239,0.92)" stroke="rgba(217,164,65,0.2)" />
+                                <text x="548" y="122" class="svg-label">Future Modules</text>
+                                <text x="548" y="144" class="svg-small">Actuarial and underwriting</text>
+
+                                <rect x="516" y="260" width="164" height="72" rx="22" fill="rgba(247,244,239,0.92)" stroke="rgba(217,164,65,0.2)" />
+                                <text x="542" y="290" class="svg-label">More Workflows</text>
+                                <text x="542" y="312" class="svg-small">Inherited operating surface</text>
+
+                                <rect x="206" y="334" width="308" height="60" rx="20" fill="rgba(247,244,239,0.96)" stroke="rgba(217,164,65,0.26)" stroke-dasharray="10 8" />
+                                <text x="230" y="358" class="svg-label">Module-Specific LLM Agents</text>
+                                <text x="230" y="378" class="svg-small">or Copilot Skills on the same platform foundation.</text>
+                            </svg>
+                        </div>
+
+                        <div class="callout-ribbon">
+                            <strong>Platform layer</strong>
+                            <p>
+                                Modules and future agentic workflows can both consume the same shared
+                                operating surface instead of rebuilding it.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <nav class="deck-controls" aria-label="Presentation controls">
+            <button class="nav-button" type="button" data-action="prev" aria-label="Go to previous slide">
+                Previous
+            </button>
+
+            <div class="pager" role="tablist" aria-label="Slides">
+                <button class="pager-button is-active" type="button" data-index="0" role="tab" aria-selected="true" aria-controls="slide-1">
+                    01
+                </button>
+                <button class="pager-button" type="button" data-index="1" role="tab" aria-selected="false" aria-controls="slide-2">
+                    02
+                </button>
+            </div>
+
+            <button class="nav-button" type="button" data-action="next" aria-label="Go to next slide">
+                Next
+            </button>
+        </nav>
+    </div>
+
+    <script>
+        (function () {
+            const slides = Array.from(document.querySelectorAll(".slide"));
+            const pagerButtons = Array.from(document.querySelectorAll(".pager-button"));
+            const prevButton = document.querySelector('[data-action="prev"]');
+            const nextButton = document.querySelector('[data-action="next"]');
+            const progressBar = document.getElementById("progressBar");
+            const slideStatus = document.getElementById("slideStatus");
+
+            let activeIndex = 0;
+            let touchStartX = null;
+            let touchStartY = null;
+
+            function clamp(index) {
+                return Math.max(0, Math.min(index, slides.length - 1));
+            }
+
+            function hashFor(index) {
+                return "#slide-" + (index + 1);
+            }
+
+            function readHash() {
+                const match = window.location.hash.match(/slide-(\d+)/);
+                if (!match) {
+                    return 0;
+                }
+                return clamp(Number(match[1]) - 1);
+            }
+
+            function updateSlide(index, updateHash) {
+                activeIndex = clamp(index);
+
+                slides.forEach((slide, slideIndex) => {
+                    const isActive = slideIndex === activeIndex;
+                    slide.classList.toggle("is-active", isActive);
+                    slide.setAttribute("aria-hidden", String(!isActive));
+                });
+
+                pagerButtons.forEach((button, buttonIndex) => {
+                    const isActive = buttonIndex === activeIndex;
+                    button.classList.toggle("is-active", isActive);
+                    button.setAttribute("aria-selected", String(isActive));
+                });
+
+                prevButton.disabled = activeIndex === 0;
+                nextButton.disabled = activeIndex === slides.length - 1;
+                slideStatus.textContent = "Slide " + (activeIndex + 1) + " of " + slides.length;
+                progressBar.style.transform = "scaleX(" + ((activeIndex + 1) / slides.length) + ")";
+
+                if (updateHash) {
+                    history.replaceState(null, "", hashFor(activeIndex));
+                }
+            }
+
+            function goNext() {
+                updateSlide(activeIndex + 1, true);
+            }
+
+            function goPrev() {
+                updateSlide(activeIndex - 1, true);
+            }
+
+            prevButton.addEventListener("click", goPrev);
+            nextButton.addEventListener("click", goNext);
+
+            pagerButtons.forEach((button) => {
+                button.addEventListener("click", function () {
+                    updateSlide(Number(button.dataset.index), true);
+                });
+            });
+
+            document.addEventListener("keydown", function (event) {
+                const target = event.target;
+                const tag = target && target.tagName ? target.tagName.toLowerCase() : "";
+                if (tag === "input" || tag === "textarea" || tag === "select") {
+                    return;
+                }
+
+                if (event.key === "ArrowRight" || event.key === "PageDown" || event.key === " ") {
+                    event.preventDefault();
+                    goNext();
+                }
+
+                if (event.key === "ArrowLeft" || event.key === "PageUp") {
+                    event.preventDefault();
+                    goPrev();
+                }
+
+                if (event.key === "Home") {
+                    event.preventDefault();
+                    updateSlide(0, true);
+                }
+
+                if (event.key === "End") {
+                    event.preventDefault();
+                    updateSlide(slides.length - 1, true);
+                }
+            });
+
+            document.addEventListener("touchstart", function (event) {
+                const touch = event.changedTouches[0];
+                touchStartX = touch.clientX;
+                touchStartY = touch.clientY;
+            }, { passive: true });
+
+            document.addEventListener("touchend", function (event) {
+                if (touchStartX === null || touchStartY === null) {
+                    return;
+                }
+
+                const touch = event.changedTouches[0];
+                const deltaX = touch.clientX - touchStartX;
+                const deltaY = touch.clientY - touchStartY;
+
+                if (Math.abs(deltaX) > 60 && Math.abs(deltaX) > Math.abs(deltaY)) {
+                    if (deltaX < 0) {
+                        goNext();
+                    } else {
+                        goPrev();
+                    }
+                }
+
+                touchStartX = null;
+                touchStartY = null;
+            }, { passive: true });
+
+            window.addEventListener("hashchange", function () {
+                updateSlide(readHash(), false);
+            });
+
+            updateSlide(readHash(), false);
+        })();
+    </script>
+</body>
+</html>
