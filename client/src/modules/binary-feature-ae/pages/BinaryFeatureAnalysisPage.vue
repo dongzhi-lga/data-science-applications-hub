@@ -155,10 +155,24 @@
                                     </div>
                                 </div>
 
-                                <!-- Row 3: Confidence Interval Level + Significance -->
+                                <!-- Row 3: Perspective + Confidence Interval Level + Significance -->
                                 <div class="filter-group q-mt-sm">
                                     <div class="row q-col-gutter-md">
-                                        <div class="col-12 col-sm-6">
+                                        <div class="col-12 col-sm-4">
+                                            <div class="text-caption text-grey-7 q-mb-xs filter-group-label">
+                                                Perspective
+                                            </div>
+                                            <q-option-group
+                                                v-model="perspective"
+                                                :options="perspectiveOptions"
+                                                type="radio"
+                                                inline
+                                                dense
+                                                color="primary"
+                                                class="filter-option-group"
+                                            />
+                                        </div>
+                                        <div class="col-12 col-sm-4">
                                             <div class="text-caption text-grey-7 q-mb-xs filter-group-label">
                                                 Confidence Interval Level
                                             </div>
@@ -172,7 +186,7 @@
                                                 class="filter-option-group"
                                             />
                                         </div>
-                                        <div class="col-12 col-sm-6">
+                                        <div class="col-12 col-sm-4">
                                             <div class="text-caption text-grey-7 q-mb-xs filter-group-label">
                                                 Significance
                                             </div>
@@ -258,64 +272,80 @@
 
                 <div
                     v-if="responseData"
-                    class="kpi-grid q-mt-md"
+                    class="q-mt-md"
                 >
-                    <q-card class="kpi-card">
-                        <q-card-section>
-                            <div class="text-caption text-grey-7">Visible Rules</div>
-                            <div class="text-h5">
-                                {{ formatWholeNumber(responseData.kpis.visible_rule_count) }}
-                            </div>
-                        </q-card-section>
-                    </q-card>
-                    <q-card class="kpi-card">
-                        <q-card-section>
-                            <div class="text-caption text-grey-7">Median Hit Rate</div>
-                            <div class="text-h5">
-                                {{ formatPercentFromRatio(responseData.kpis.median_hit_rate) }}
-                            </div>
-                        </q-card-section>
-                    </q-card>
-                    <q-card class="kpi-card">
-                        <q-card-section>
-                            <div class="text-caption text-grey-7">Median Claim Count</div>
-                            <div class="text-h5">
-                                {{ formatWholeNumber(responseData.kpis.median_claim_count) }}
-                            </div>
-                        </q-card-section>
-                    </q-card>
-                    <q-card class="kpi-card">
-                        <q-card-section>
-                            <div class="text-caption text-grey-7">Median A/E</div>
-                            <div class="text-h5">
-                                {{ responseData.kpis.median_ae.toFixed(3) }}
-                            </div>
-                        </q-card-section>
-                    </q-card>
-                    <q-card class="kpi-card">
-                        <q-card-section>
-                            <div class="text-caption text-grey-7">Elevated</div>
-                            <div class="text-h5">
-                                {{ formatWholeNumber(responseData.kpis.elevated_count) }}
-                            </div>
-                        </q-card-section>
-                    </q-card>
-                    <q-card class="kpi-card">
-                        <q-card-section>
-                            <div class="text-caption text-grey-7">Uncertain</div>
-                            <div class="text-h5">
-                                {{ formatWholeNumber(responseData.kpis.uncertain_count) }}
-                            </div>
-                        </q-card-section>
-                    </q-card>
-                    <q-card class="kpi-card">
-                        <q-card-section>
-                            <div class="text-caption text-grey-7">Below Expected</div>
-                            <div class="text-h5">
-                                {{ formatWholeNumber(responseData.kpis.below_expected_count) }}
-                            </div>
-                        </q-card-section>
-                    </q-card>
+                    <div class="row items-center justify-between q-mb-sm">
+                        <div class="text-h6">{{ perspectiveLabel }} Perspective KPIs</div>
+                        <q-badge color="primary" outline>
+                            {{ perspectiveLabel }} Perspective
+                        </q-badge>
+                    </div>
+                    <div class="kpi-grid">
+                        <q-card class="kpi-card">
+                            <q-card-section>
+                                <div class="text-caption text-grey-7">Visible Rules</div>
+                                <div class="text-h5">
+                                    {{ formatWholeNumber(responseData.kpis.visible_rule_count) }}
+                                </div>
+                            </q-card-section>
+                        </q-card>
+                        <q-card class="kpi-card">
+                            <q-card-section>
+                                <div class="text-caption text-grey-7">Median Hit Rate</div>
+                                <div class="text-h5">
+                                    {{ formatPercentFromRatio(responseData.kpis.median_hit_rate) }}
+                                </div>
+                            </q-card-section>
+                        </q-card>
+                        <q-card class="kpi-card">
+                            <q-card-section>
+                                <div class="text-caption text-grey-7">
+                                    {{ activeClaimMetricLabel }}
+                                </div>
+                                <div class="text-h5">
+                                    {{
+                                        displayedPerspective === 'count'
+                                            ? formatWholeNumber(responseData.kpis.median_claim_count)
+                                            : formatCurrency(responseData.kpis.median_claim_amount)
+                                    }}
+                                </div>
+                            </q-card-section>
+                        </q-card>
+                        <q-card class="kpi-card">
+                            <q-card-section>
+                                <div class="text-caption text-grey-7">
+                                    Median A/E ({{ perspectiveLabel }})
+                                </div>
+                                <div class="text-h5">
+                                    {{ responseData.kpis.median_ae.toFixed(3) }}
+                                </div>
+                            </q-card-section>
+                        </q-card>
+                        <q-card class="kpi-card">
+                            <q-card-section>
+                                <div class="text-caption text-grey-7">Elevated</div>
+                                <div class="text-h5">
+                                    {{ formatWholeNumber(responseData.kpis.elevated_count) }}
+                                </div>
+                            </q-card-section>
+                        </q-card>
+                        <q-card class="kpi-card">
+                            <q-card-section>
+                                <div class="text-caption text-grey-7">Uncertain</div>
+                                <div class="text-h5">
+                                    {{ formatWholeNumber(responseData.kpis.uncertain_count) }}
+                                </div>
+                            </q-card-section>
+                        </q-card>
+                        <q-card class="kpi-card">
+                            <q-card-section>
+                                <div class="text-caption text-grey-7">Below Expected</div>
+                                <div class="text-h5">
+                                    {{ formatWholeNumber(responseData.kpis.below_expected_count) }}
+                                </div>
+                            </q-card-section>
+                        </q-card>
+                    </div>
                 </div>
 
                 <div
@@ -326,7 +356,12 @@
                         <q-card class="section-card">
                             <q-card-section>
                                 <div class="row items-center justify-between">
-                                    <div class="text-h6">Rule Scatter</div>
+                                    <div>
+                                        <div class="text-h6">Rule Scatter</div>
+                                        <div class="text-caption text-grey-7">
+                                            {{ perspectiveLabel }} perspective
+                                        </div>
+                                    </div>
                                     <div class="row items-center q-gutter-x-sm">
                                         <span class="text-caption text-grey-7">Bubble Size</span>
                                         <q-btn-toggle
@@ -334,10 +369,7 @@
                                             unelevated
                                             class="bubble-size-toggle"
                                             toggle-color="primary"
-                                            :options="[
-                                                { label: 'Hit Count', value: 'hit_count' },
-                                                { label: 'Claim Count', value: 'claim_count' },
-                                            ]"
+                                            :options="sizeByOptions"
                                         />
                                     </div>
                                 </div>
@@ -345,6 +377,7 @@
                             <q-card-section class="q-pt-none scatter-card">
                                 <BinaryFeatureScatterPlot
                                     :rows="rows"
+                                    :perspective="displayedPerspective"
                                     :size-by="sizeBy"
                                     :display-cap="yDisplayCap"
                                     :x-display-cap="xDisplayCap"
@@ -362,6 +395,7 @@
                     <div class="col-12 col-lg-4">
                         <BinaryFeatureDetailCards
                             :rows="rows"
+                            :perspective="displayedPerspective"
                             :focused-row-id="focusedRowId"
                             :ci-level="ciLevel"
                             :show-charts="false"
@@ -369,7 +403,12 @@
 
                         <q-card class="q-mt-md section-card">
                             <q-card-section class="row items-center justify-between">
-                                <div class="text-h6">Pinned Rules</div>
+                                <div>
+                                    <div class="text-h6">Pinned Rules</div>
+                                    <div class="text-caption text-grey-7">
+                                        {{ perspectiveLabel }} perspective values
+                                    </div>
+                                </div>
                                 <div class="row q-gutter-sm">
                                     <q-btn
                                         label="Pin Focused Rule"
@@ -384,34 +423,41 @@
                                         color="grey-7"
                                         flat
                                         dense
-                                        :disable="pinnedRules.length === 0"
+                                        :disable="pinnedRuleKeys.length === 0"
                                         @click="clearPins"
                                     />
                                 </div>
                             </q-card-section>
                             <q-card-section>
                                 <div
-                                    v-if="!pinnedRules.length"
+                                    v-if="!pinnedRuleKeys.length"
                                     class="text-grey-7"
                                 >
                                     No pinned rules yet.
                                 </div>
+                                <div
+                                    v-else-if="!pinnedRules.length && hasHiddenPins"
+                                    class="text-grey-7"
+                                >
+                                    Pinned rules are outside the current result set.
+                                </div>
                                 <q-list v-else dense separator>
                                     <q-item
                                         v-for="rule in pinnedRules"
-                                        :key="rule.row_id"
+                                        :key="rule.rule_key"
                                     >
                                         <q-item-section>
                                             <q-item-label class="text-weight-medium">
                                                 {{ rule.rule }}
                                             </q-item-label>
                                             <q-item-label caption>
-                                                {{ rule.RuleName }}
+                                                {{ rule.RuleName }} | {{ rule.first_date }}
                                             </q-item-label>
                                         </q-item-section>
                                         <q-item-section side top>
                                             <div class="text-caption">
-                                                A/E {{ rule.ae_ratio.toFixed(3) }}
+                                                {{ perspectiveLabel }} A/E
+                                                {{ rule.ae_ratio.toFixed(3) }}
                                             </div>
                                             <q-badge color="grey-8" class="q-mt-xs">
                                                 {{ rule.significance_class }}
@@ -430,6 +476,7 @@
                 >
                     <BinaryFeatureDetailCards
                         :rows="rows"
+                        :perspective="displayedPerspective"
                         :focused-row-id="focusedRowId"
                         :ci-level="ciLevel"
                         :show-summary="false"
@@ -441,11 +488,14 @@
                     class="q-mt-md section-card"
                 >
                     <q-card-section>
-                        <div class="text-h6">Compare / Triage Table</div>
+                        <div class="text-h6">
+                            Compare / Triage Table ({{ perspectiveLabel }} Perspective)
+                        </div>
                     </q-card-section>
                     <q-card-section class="q-pt-none">
                         <BinaryFeatureGrid
                             :rows="rows"
+                            :perspective="displayedPerspective"
                             :selected-row-ids="selectedRowIds"
                             @update:selected-row-ids="selectedRowIds = $event"
                             @focus-row="focusedRowId = $event"
@@ -457,7 +507,10 @@
                     v-if="responseData"
                     class="q-mt-md"
                 >
-                    <BinaryFeatureCompareCharts :selected-rows="selectedRows" />
+                    <BinaryFeatureCompareCharts
+                        :selected-rows="selectedRows"
+                        :perspective="displayedPerspective"
+                    />
                 </div>
             </template>
         </div>
@@ -480,20 +533,26 @@ import BinaryFeatureScatterPlot from '@/modules/binary-feature-ae/components/Bin
 import {
     BINARY_FEATURE_PERFORMANCE_TYPE,
     CI_LEVEL_OPTIONS,
+    PERSPECTIVE_LABELS,
+    PERSPECTIVE_OPTIONS,
     SIGNIFICANCE_OPTIONS,
 } from '@/modules/binary-feature-ae/constants';
 import type {
     ApiBinaryFeatureCalculateResponse,
     ApiBinaryFeatureRow,
     BinaryFeatureCiLevel,
-    BinaryFeaturePinnedRule,
+    BinaryFeaturePerspective,
     BinaryFeatureSignificance,
 } from '@/types/binary-feature-ae';
 import {
     isBinaryFeatureDatasetConfig,
     type ApiDatasetConfig,
 } from '@/types/dataset-config';
-import { formatPercentFromRatio, formatWholeNumber } from '@/utils/format';
+import {
+    formatCurrency,
+    formatPercentFromRatio,
+    formatWholeNumber,
+} from '@/utils/format';
 
 const route = useRoute();
 
@@ -510,8 +569,9 @@ const significanceValues = ref<BinaryFeatureSignificance[]>([...SIGNIFICANCE_OPT
 const searchText = ref('');
 const minHitCount = ref<number | null>(0);
 const minClaimCount = ref<number | null>(5);
+const perspective = ref<BinaryFeaturePerspective>('count');
 const ciLevel = ref<BinaryFeatureCiLevel>('95');
-const sizeBy = ref<'hit_count' | 'claim_count'>('hit_count');
+const sizeBy = ref<'hit_count' | 'claim_count' | 'claim_amount'>('hit_count');
 const yDisplayCap = ref(2.0);
 const xDisplayCap = ref(100);
 
@@ -527,7 +587,7 @@ function clampY() {
 
 const selectedRowIds = ref<string[]>([]);
 const focusedRowId = ref<string | null>(null);
-const pinnedRules = ref<BinaryFeaturePinnedRule[]>([]);
+const pinnedRuleKeys = ref<string[]>([]);
 
 const activeConfig = ref<ApiDatasetConfig | null>(null);
 let abortController: AbortController | null = null;
@@ -578,7 +638,28 @@ const ciLevelRadioOptions = CI_LEVEL_OPTIONS.map((value) => ({
     value,
 }));
 
+const perspectiveOptions = PERSPECTIVE_OPTIONS.map((value) => ({
+    label: PERSPECTIVE_LABELS[value],
+    value,
+}));
+
+const displayedPerspective = computed<BinaryFeaturePerspective>(() => {
+    return responseData.value?.perspective ?? perspective.value;
+});
+
+const perspectiveLabel = computed(() => PERSPECTIVE_LABELS[displayedPerspective.value]);
+
+const sizeByOptions = computed(() => [
+    { label: 'Hit Count', value: 'hit_count' },
+    { label: 'Claim Count', value: 'claim_count' },
+    { label: 'Claim Amount', value: 'claim_amount' },
+]);
+
 const rows = computed(() => responseData.value?.rows ?? []);
+
+const rowsByRuleKey = computed(() => {
+    return new Map(rows.value.map((row) => [row.rule_key, row]));
+});
 
 const focusedRow = computed(() => {
     if (!focusedRowId.value) {
@@ -590,6 +671,22 @@ const focusedRow = computed(() => {
 
 const selectedRows = computed(() => {
     return rows.value.filter((row) => selectedRowIds.value.includes(row.row_id));
+});
+
+const pinnedRules = computed(() => {
+    return pinnedRuleKeys.value
+        .map((ruleKey) => rowsByRuleKey.value.get(ruleKey) ?? null)
+        .filter((row): row is ApiBinaryFeatureRow => row !== null);
+});
+
+const hasHiddenPins = computed(() => {
+    return pinnedRuleKeys.value.length > pinnedRules.value.length;
+});
+
+const activeClaimMetricLabel = computed(() => {
+    return displayedPerspective.value === 'count'
+        ? 'Median Claim Count'
+        : 'Median Claim Amount';
 });
 
 function useDebouncedRef<T>(source: { value: T }, delayMs: number) {
@@ -635,13 +732,14 @@ function resetDatasetState() {
     searchText.value = '';
     minHitCount.value = 0;
     minClaimCount.value = 5;
+    perspective.value = 'count';
     ciLevel.value = '95';
     sizeBy.value = 'hit_count';
     yDisplayCap.value = 2.0;
     xDisplayCap.value = 100;
     selectedRowIds.value = [];
     focusedRowId.value = null;
-    pinnedRules.value = [];
+    pinnedRuleKeys.value = [];
 }
 
 async function ensureBinaryFeatureConfig(configId: string) {
@@ -712,6 +810,7 @@ async function loadData() {
         const result = await postBinaryFeatureCalculate(
             {
                 config_id: activeConfig.value.id,
+                perspective: perspective.value,
                 ci_level: ciLevel.value,
                 categories: categories.value,
                 significance_values: significanceValues.value,
@@ -741,24 +840,15 @@ function pinFocusedRule() {
         return;
     }
 
-    if (pinnedRules.value.some((row) => row.row_id === focusedRow.value?.row_id)) {
+    if (pinnedRuleKeys.value.includes(focusedRow.value.rule_key)) {
         return;
     }
 
-    pinnedRules.value = [
-        ...pinnedRules.value,
-        {
-            row_id: focusedRow.value.row_id,
-            rule: focusedRow.value.rule,
-            RuleName: focusedRow.value.RuleName,
-            ae_ratio: focusedRow.value.ae_ratio,
-            significance_class: focusedRow.value.significance_class,
-        },
-    ];
+    pinnedRuleKeys.value = [...pinnedRuleKeys.value, focusedRow.value.rule_key];
 }
 
 function clearPins() {
-    pinnedRules.value = [];
+    pinnedRuleKeys.value = [];
 }
 
 watch(
@@ -783,6 +873,7 @@ watch(
         activeConfig.value?.id,
         categories.value,
         significanceValues.value,
+        perspective.value,
         ciLevel.value,
         debouncedSearchText.value,
         debouncedMinHitCount.value,
@@ -796,6 +887,13 @@ watch(
         void loadData();
     },
     { deep: true },
+);
+
+watch(
+    () => perspective.value,
+    (nextPerspective) => {
+        sizeBy.value = nextPerspective === 'amount' ? 'claim_amount' : 'hit_count';
+    },
 );
 
 watch(

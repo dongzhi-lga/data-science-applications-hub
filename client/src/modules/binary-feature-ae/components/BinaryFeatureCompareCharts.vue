@@ -19,7 +19,7 @@
 
 <script setup lang="ts">
 import Plotly from 'plotly.js-dist-min';
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 import type { ApiBinaryFeatureRow } from '@/types/binary-feature-ae';
 import { truncateLabel } from '@/utils/format';
@@ -28,10 +28,15 @@ import { COLA_DEFINITIONS } from '@/modules/binary-feature-ae/constants';
 
 const props = defineProps<{
     selectedRows: ApiBinaryFeatureRow[];
+    perspective: 'count' | 'amount';
 }>();
 
 const ciChartEl = ref<HTMLDivElement | null>(null);
 const mixChartEl = ref<HTMLDivElement | null>(null);
+
+const perspectiveLabel = computed(() => {
+    return props.perspective === 'count' ? 'Count' : 'Amount';
+});
 
 function buildEmptyFigure(message: string, height = 420) {
     return {
@@ -77,6 +82,9 @@ async function renderCharts() {
         if (right.ae_ratio !== left.ae_ratio) {
             return right.ae_ratio - left.ae_ratio;
         }
+        if (props.perspective === 'amount') {
+            return right.claim_amount - left.claim_amount;
+        }
         return right.claim_count - left.claim_count;
     });
 
@@ -112,24 +120,26 @@ async function renderCharts() {
                     row.hit_count,
                     row.significance_class,
                     row.rule,
+                    row.claim_amount,
                 ]),
                 hovertemplate:
                     '<b>%{customdata[5]}</b><br>' +
                     'Rule Name: %{customdata[0]}<br>' +
                     'Category: %{customdata[1]}<br>' +
-                    'Claim Count: %{customdata[2]:,.0f}<br>' +
                     'Hit Count: %{customdata[3]:,.0f}<br>' +
+                    'Claim Count: %{customdata[2]:,.0f}<br>' +
+                    'Claim Amount: %{customdata[6]:$,.0f}<br>' +
                     'Significance: %{customdata[4]}<br>' +
-                    'A/E: %{x:.4f}<extra></extra>',
+                    `${perspectiveLabel.value} A/E: %{x:.4f}<extra></extra>`,
                 showlegend: false,
             },
         ],
         {
             template: 'plotly_white',
-            title: 'Selected Rules: A/E with Confidence Intervals',
+            title: `Selected Rules: ${perspectiveLabel.value} A/E with Confidence Intervals`,
             height: chartHeight,
             margin: sharedMargin,
-            xaxis: { title: 'A/E Ratio' },
+            xaxis: { title: `A/E Ratio (${perspectiveLabel.value})` },
             yaxis: {
                 title: '',
                 categoryorder: 'array',
@@ -168,19 +178,21 @@ async function renderCharts() {
                 row.significance_class,
                 row.rule,
                 row.claim_count,
+                row.claim_amount,
             ]),
             hovertemplate:
                 '<b>%{customdata[4]}</b><br>' +
                 'Rule Name: %{customdata[0]}<br>' +
                 'Category: %{customdata[1]}<br>' +
-                'A/E Ratio: %{customdata[2]:.4f}<br>' +
+                `${perspectiveLabel.value} A/E Ratio: %{customdata[2]:.4f}<br>` +
                 'Significance: %{customdata[3]}<br>' +
                 'Claim Count: %{customdata[5]:,.0f}<br>' +
+                'Claim Amount: %{customdata[6]:$,.0f}<br>' +
                 'Share: %{x:.1f}%<extra></extra>',
         })),
         {
             template: 'plotly_white',
-            title: 'Selected Rules: Claim Mix (Share %)',
+            title: `Selected Rules: Claim Mix (${perspectiveLabel.value} Share %)`,
             barmode: 'stack',
             height: chartHeight,
             margin: sharedMargin,
@@ -201,7 +213,7 @@ onMounted(() => {
 });
 
 watch(
-    () => props.selectedRows,
+    () => [props.selectedRows, props.perspective],
     () => {
         void renderCharts();
     },

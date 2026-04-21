@@ -15,7 +15,8 @@ import {
 
 const props = defineProps<{
     rows: ApiBinaryFeatureRow[];
-    sizeBy: 'hit_count' | 'claim_count';
+    perspective: 'count' | 'amount';
+    sizeBy: 'hit_count' | 'claim_count' | 'claim_amount';
     displayCap: number;
     xDisplayCap: number;
     selectedRowIds: string[];
@@ -56,6 +57,10 @@ function buildEmptyFigure(message: string) {
 function markerSizeForRow(row: ApiBinaryFeatureRow, maxSizeValue: number): number {
     const sizeValue = Math.max(0, row[props.sizeBy] ?? 0);
     return Math.sqrt(sizeValue / Math.max(maxSizeValue, 1)) * 40 + 8;
+}
+
+function getPerspectiveLabel(): string {
+    return props.perspective === 'count' ? 'Count' : 'Amount';
 }
 
 async function renderPlot() {
@@ -129,6 +134,7 @@ async function renderPlot() {
                 row.dominant_cola,
                 row.dominant_cola_pct,
                 row.confidence_band,
+                row.claim_amount,
             ]),
             marker: {
                 size: bandRows.map((row) => markerSizeForRow(row, maxSizeValue)),
@@ -161,11 +167,12 @@ async function renderPlot() {
                 'Hit Count: %{customdata[4]:,.0f}<br>' +
                 'Hit Rate: %{customdata[5]:.4%}<br>' +
                 'Claim Count: %{customdata[6]:,.0f}<br>' +
+                'Claim Amount: %{customdata[15]:$,.0f}<br>' +
                 'MEC Sum: %{customdata[7]:,.2f}<br>' +
-                'A/E Ratio: %{customdata[8]:.4f}<br>' +
+                `${getPerspectiveLabel()} A/E Ratio: %{customdata[8]:.4f}<br>` +
                 'CI: [%{customdata[9]:.4f}, %{customdata[10]:.4f}]<br>' +
                 'Significance: %{customdata[11]}<br>' +
-                'Dominant Mix: %{customdata[12]} (%{customdata[13]:.1f}%)<br>' +
+                `${getPerspectiveLabel()} Mix: %{customdata[12]} (%{customdata[13]:.1f}%)<br>` +
                 'Confidence Band: %{customdata[14]}' +
                 '<extra></extra>',
         });
@@ -199,10 +206,13 @@ async function renderPlot() {
         traces,
         {
             template: 'plotly_white',
-            title: { text: 'Binary Feature Triage Scatter', x: 0.5 },
+            title: {
+                text: `Binary Feature Triage Scatter (${getPerspectiveLabel()} Perspective)`,
+                x: 0.5,
+            },
             xaxis: { title: 'Hit Rate', tickformat: '.2%', range: [0, props.xDisplayCap / 100] },
             yaxis: {
-                title: 'A/E Ratio',
+                title: `A/E Ratio (${getPerspectiveLabel()})`,
                 range: [0, props.displayCap],
             },
             height: 650,
@@ -260,6 +270,7 @@ onMounted(() => {
 watch(
     () => [
         props.rows,
+        props.perspective,
         props.sizeBy,
         props.displayCap,
         props.xDisplayCap,

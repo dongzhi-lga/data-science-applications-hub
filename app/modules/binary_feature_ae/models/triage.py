@@ -11,6 +11,11 @@ class ApiBinaryFeatureCiLevel(StrEnum):
     CI_80 = "80"
 
 
+class ApiBinaryFeaturePerspective(StrEnum):
+    COUNT = "count"
+    AMOUNT = "amount"
+
+
 class ApiBinaryFeatureSignificance(StrEnum):
     ELEVATED = "Elevated"
     UNCERTAIN = "Uncertain"
@@ -23,6 +28,7 @@ class ApiBinaryFeatureKpis(BaseModel):
     visible_rule_count: int
     median_hit_rate: float
     median_claim_count: float
+    median_claim_amount: float
     median_ae: float
     elevated_count: int
     uncertain_count: int
@@ -33,6 +39,7 @@ class ApiBinaryFeatureCalculateRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     config_id: str
+    perspective: ApiBinaryFeaturePerspective = ApiBinaryFeaturePerspective.COUNT
     ci_level: ApiBinaryFeatureCiLevel = ApiBinaryFeatureCiLevel.CI_95
     categories: list[str] = Field(default_factory=list)
     significance_values: list[ApiBinaryFeatureSignificance] = Field(
@@ -51,6 +58,7 @@ class ApiBinaryFeatureRow(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     row_id: str
+    rule_key: str
     rule: str
     RuleName: str
     rule_label: str
@@ -59,6 +67,7 @@ class ApiBinaryFeatureRow(BaseModel):
     hit_count: float
     hit_rate: float
     claim_count: float
+    claim_amount: float
     mec_sum: float
     ae_ratio: float
     ci_lower_95: float
@@ -81,10 +90,10 @@ class ApiBinaryFeatureRow(BaseModel):
     cola_other_medical_pct_display: float
     cola_respiratory_pct_display: float
     cola_others_pct_display: float
-    significance_class_95: str
-    significance_class_90: str
-    significance_class_80: str
-    significance_class: str
+    significance_class_95: ApiBinaryFeatureSignificance
+    significance_class_90: ApiBinaryFeatureSignificance
+    significance_class_80: ApiBinaryFeatureSignificance
+    significance_class: ApiBinaryFeatureSignificance
     ae_gap: float
     abs_ae_gap: float
     ci_width: float
@@ -100,6 +109,7 @@ class ApiBinaryFeatureCalculateResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     dataset_name: str
+    perspective: ApiBinaryFeaturePerspective
     available_categories: list[str]
     kpis: ApiBinaryFeatureKpis
     rows: list[ApiBinaryFeatureRow]

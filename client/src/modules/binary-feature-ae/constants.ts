@@ -4,6 +4,7 @@ import type {
 } from '@/types/dataset-config';
 import type {
     BinaryFeatureCiLevel,
+    BinaryFeaturePerspective,
     BinaryFeatureSignificance,
 } from '@/types/binary-feature-ae';
 
@@ -17,6 +18,13 @@ export const SIGNIFICANCE_OPTIONS: BinaryFeatureSignificance[] = [
 ];
 
 export const CI_LEVEL_OPTIONS: BinaryFeatureCiLevel[] = ['95', '90', '80'];
+
+export const PERSPECTIVE_OPTIONS: BinaryFeaturePerspective[] = ['count', 'amount'];
+
+export const PERSPECTIVE_LABELS: Record<BinaryFeaturePerspective, string> = {
+    count: 'Count',
+    amount: 'Amount',
+};
 
 export const CONFIDENCE_BAND_ORDER = [
     'Elevated 95%',
@@ -38,17 +46,17 @@ export const CONFIDENCE_BAND_COLORS: Record<string, string> = {
     'Below Expected 95%': '#375623',
 };
 
+export type BinaryFeatureColaKey =
+    | 'cola_cancer_pct'
+    | 'cola_heart_pct'
+    | 'cola_nervous_system_pct'
+    | 'cola_non_natural_pct'
+    | 'cola_other_medical_pct'
+    | 'cola_respiratory_pct'
+    | 'cola_others_pct';
+
 export const COLA_DEFINITIONS: Array<{
-    key: keyof Pick<
-        ApiBinaryFeatureAeModuleConfig,
-        | 'cola_cancer_pct'
-        | 'cola_heart_pct'
-        | 'cola_nervous_system_pct'
-        | 'cola_non_natural_pct'
-        | 'cola_other_medical_pct'
-        | 'cola_respiratory_pct'
-        | 'cola_others_pct'
-    >;
+    key: BinaryFeatureColaKey;
     label: string;
 }> = [
     { key: 'cola_cancer_pct', label: 'Cancer' },
@@ -60,59 +68,188 @@ export const COLA_DEFINITIONS: Array<{
     { key: 'cola_others_pct', label: 'Others' },
 ];
 
-export const BINARY_FEATURE_FIELD_DEFINITIONS: Array<{
+export type BinaryFeatureFieldDefinition = {
     key: keyof ApiBinaryFeatureAeModuleConfig;
     label: string;
     sourceName: string;
-}> = [
-    { key: 'rule', label: 'Rule', sourceName: 'rule' },
-    { key: 'RuleName', label: 'Rule Name', sourceName: 'RuleName' },
-    { key: 'first_date', label: 'First Date', sourceName: 'first_date' },
-    { key: 'category', label: 'Category', sourceName: 'category' },
-    { key: 'hit_count', label: 'Hit Count', sourceName: 'hit_count' },
-    { key: 'hit_rate', label: 'Hit Rate', sourceName: 'hit_rate' },
-    { key: 'claim_count', label: 'Claim Count', sourceName: 'claim_count' },
-    { key: 'mec_sum', label: 'MEC Sum', sourceName: 'mec_sum' },
-    { key: 'ae_ratio', label: 'A/E Ratio', sourceName: 'ae_ratio' },
-    { key: 'ci_lower_95', label: 'CI Lower 95', sourceName: 'ci_lower_95' },
-    { key: 'ci_upper_95', label: 'CI Upper 95', sourceName: 'ci_upper_95' },
-    { key: 'ci_lower_90', label: 'CI Lower 90', sourceName: 'ci_lower_90' },
-    { key: 'ci_upper_90', label: 'CI Upper 90', sourceName: 'ci_upper_90' },
-    { key: 'ci_lower_80', label: 'CI Lower 80', sourceName: 'ci_lower_80' },
-    { key: 'ci_upper_80', label: 'CI Upper 80', sourceName: 'ci_upper_80' },
+};
+
+export type BinaryFeatureFieldSection = {
+    title: string;
+    fields: BinaryFeatureFieldDefinition[];
+};
+
+export const BINARY_FEATURE_FIELD_SECTIONS: BinaryFeatureFieldSection[] = [
     {
-        key: 'cola_cancer_pct',
-        label: 'COLA Cancer %',
-        sourceName: 'cola_cancer_pct',
+        title: 'Shared Fields',
+        fields: [
+            { key: 'rule', label: 'Rule', sourceName: 'rule' },
+            { key: 'RuleName', label: 'Rule Name', sourceName: 'RuleName' },
+            { key: 'first_date', label: 'First Date', sourceName: 'first_date' },
+            { key: 'category', label: 'Category', sourceName: 'category' },
+            { key: 'hit_count', label: 'Hit Count', sourceName: 'hit_count' },
+            { key: 'hit_rate', label: 'Hit Rate', sourceName: 'hit_rate' },
+            { key: 'claim_count', label: 'Claim Count', sourceName: 'claim_count' },
+            {
+                key: 'claim_amount',
+                label: 'Claim Amount',
+                sourceName: 'claim_amount',
+            },
+            { key: 'mec_sum', label: 'MEC Sum', sourceName: 'mec_sum' },
+        ],
     },
     {
-        key: 'cola_heart_pct',
-        label: 'COLA Heart %',
-        sourceName: 'cola_heart_pct',
+        title: 'Count Perspective',
+        fields: [
+            {
+                key: 'ae_ratio_count',
+                label: 'Count A/E Ratio',
+                sourceName: 'ae_ratio_count',
+            },
+            {
+                key: 'ci_lower_95_count',
+                label: 'Count CI Lower 95',
+                sourceName: 'ci_lower_95_count',
+            },
+            {
+                key: 'ci_upper_95_count',
+                label: 'Count CI Upper 95',
+                sourceName: 'ci_upper_95_count',
+            },
+            {
+                key: 'ci_lower_90_count',
+                label: 'Count CI Lower 90',
+                sourceName: 'ci_lower_90_count',
+            },
+            {
+                key: 'ci_upper_90_count',
+                label: 'Count CI Upper 90',
+                sourceName: 'ci_upper_90_count',
+            },
+            {
+                key: 'ci_lower_80_count',
+                label: 'Count CI Lower 80',
+                sourceName: 'ci_lower_80_count',
+            },
+            {
+                key: 'ci_upper_80_count',
+                label: 'Count CI Upper 80',
+                sourceName: 'ci_upper_80_count',
+            },
+            {
+                key: 'cola_cancer_pct_count',
+                label: 'Count COLA Cancer %',
+                sourceName: 'cola_cancer_pct_count',
+            },
+            {
+                key: 'cola_heart_pct_count',
+                label: 'Count COLA Heart %',
+                sourceName: 'cola_heart_pct_count',
+            },
+            {
+                key: 'cola_nervous_system_pct_count',
+                label: 'Count COLA Nervous System %',
+                sourceName: 'cola_nervous_system_pct_count',
+            },
+            {
+                key: 'cola_non_natural_pct_count',
+                label: 'Count COLA Non-natural %',
+                sourceName: 'cola_non-natural_pct_count',
+            },
+            {
+                key: 'cola_other_medical_pct_count',
+                label: 'Count COLA Other Medical %',
+                sourceName: 'cola_other_medical_pct_count',
+            },
+            {
+                key: 'cola_respiratory_pct_count',
+                label: 'Count COLA Respiratory %',
+                sourceName: 'cola_respiratory_pct_count',
+            },
+            {
+                key: 'cola_others_pct_count',
+                label: 'Count COLA Others %',
+                sourceName: 'cola_others_pct_count',
+            },
+        ],
     },
     {
-        key: 'cola_nervous_system_pct',
-        label: 'COLA Nervous System %',
-        sourceName: 'cola_nervous_system_pct',
-    },
-    {
-        key: 'cola_non_natural_pct',
-        label: 'COLA Non-natural %',
-        sourceName: 'cola_non-natural_pct',
-    },
-    {
-        key: 'cola_other_medical_pct',
-        label: 'COLA Other Medical %',
-        sourceName: 'cola_other_medical_pct',
-    },
-    {
-        key: 'cola_respiratory_pct',
-        label: 'COLA Respiratory %',
-        sourceName: 'cola_respiratory_pct',
-    },
-    {
-        key: 'cola_others_pct',
-        label: 'COLA Others %',
-        sourceName: 'cola_others_pct',
+        title: 'Amount Perspective',
+        fields: [
+            {
+                key: 'ae_ratio_amount',
+                label: 'Amount A/E Ratio',
+                sourceName: 'ae_ratio_amount',
+            },
+            {
+                key: 'ci_lower_95_amount',
+                label: 'Amount CI Lower 95',
+                sourceName: 'ci_lower_95_amount',
+            },
+            {
+                key: 'ci_upper_95_amount',
+                label: 'Amount CI Upper 95',
+                sourceName: 'ci_upper_95_amount',
+            },
+            {
+                key: 'ci_lower_90_amount',
+                label: 'Amount CI Lower 90',
+                sourceName: 'ci_lower_90_amount',
+            },
+            {
+                key: 'ci_upper_90_amount',
+                label: 'Amount CI Upper 90',
+                sourceName: 'ci_upper_90_amount',
+            },
+            {
+                key: 'ci_lower_80_amount',
+                label: 'Amount CI Lower 80',
+                sourceName: 'ci_lower_80_amount',
+            },
+            {
+                key: 'ci_upper_80_amount',
+                label: 'Amount CI Upper 80',
+                sourceName: 'ci_upper_80_amount',
+            },
+            {
+                key: 'cola_cancer_pct_amount',
+                label: 'Amount COLA Cancer %',
+                sourceName: 'cola_cancer_pct_amount',
+            },
+            {
+                key: 'cola_heart_pct_amount',
+                label: 'Amount COLA Heart %',
+                sourceName: 'cola_heart_pct_amount',
+            },
+            {
+                key: 'cola_nervous_system_pct_amount',
+                label: 'Amount COLA Nervous System %',
+                sourceName: 'cola_nervous_system_pct_amount',
+            },
+            {
+                key: 'cola_non_natural_pct_amount',
+                label: 'Amount COLA Non-natural %',
+                sourceName: 'cola_non-natural_pct_amount',
+            },
+            {
+                key: 'cola_other_medical_pct_amount',
+                label: 'Amount COLA Other Medical %',
+                sourceName: 'cola_other_medical_pct_amount',
+            },
+            {
+                key: 'cola_respiratory_pct_amount',
+                label: 'Amount COLA Respiratory %',
+                sourceName: 'cola_respiratory_pct_amount',
+            },
+            {
+                key: 'cola_others_pct_amount',
+                label: 'Amount COLA Others %',
+                sourceName: 'cola_others_pct_amount',
+            },
+        ],
     },
 ];
+
+export const BINARY_FEATURE_FIELD_DEFINITIONS = BINARY_FEATURE_FIELD_SECTIONS.flatMap(
+    (section) => section.fields,
+);

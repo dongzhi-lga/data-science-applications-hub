@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import shutil
 import uuid
 from datetime import datetime
@@ -18,6 +19,8 @@ from app.core.service.storage import (
     get_dataset_file_path,
     normalize_stored_file_path,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def save_uploaded_file(config_id: str, file_content: BinaryIO, filename: str) -> Path:
@@ -71,10 +74,20 @@ def _load_configs() -> list[ApiDatasetConfig]:
 
         configs = []
         for item in data:
-            item["created_date"] = datetime.fromisoformat(item["created_date"])
-            configs.append(ApiDatasetConfig(**item))
+            payload = dict(item)
+            try:
+                payload["created_date"] = datetime.fromisoformat(payload["created_date"])
+                configs.append(ApiDatasetConfig(**payload))
+            except Exception as exc:
+                logger.warning(
+                    "Skipping invalid dataset config '%s' for module '%s': %s",
+                    payload.get("id", "<unknown>"),
+                    payload.get("module_id", "<unknown>"),
+                    exc,
+                )
         return configs
-    except Exception:
+    except Exception as exc:
+        logger.warning("Failed to load dataset configs from '%s': %s", configs_file, exc)
         return []
 
 

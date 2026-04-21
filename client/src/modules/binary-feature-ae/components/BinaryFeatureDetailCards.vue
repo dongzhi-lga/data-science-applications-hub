@@ -31,23 +31,33 @@
                         <span>{{ formatWholeNumber(focusedRow.claim_count) }}</span>
                     </div>
                     <div class="detail-metric">
+                        <span class="detail-label">Claim Amount</span>
+                        <span>{{ formatCurrency(focusedRow.claim_amount) }}</span>
+                    </div>
+                    <div class="detail-metric">
                         <span class="detail-label">MEC Sum</span>
                         <span>{{ focusedRow.mec_sum.toFixed(2) }}</span>
                     </div>
                     <div class="detail-metric">
-                        <span class="detail-label">A/E Ratio</span>
+                        <span class="detail-label">A/E Ratio ({{ perspectiveLabel }})</span>
                         <span>{{ focusedRow.ae_ratio.toFixed(4) }}</span>
                     </div>
                     <div class="detail-metric">
-                        <span class="detail-label">CI Lower ({{ ciLevel }}%)</span>
+                        <span class="detail-label">
+                            CI Lower ({{ perspectiveLabel }} {{ ciLevel }}%)
+                        </span>
                         <span>{{ focusedRow.ci_lower.toFixed(4) }}</span>
                     </div>
                     <div class="detail-metric">
-                        <span class="detail-label">CI Upper ({{ ciLevel }}%)</span>
+                        <span class="detail-label">
+                            CI Upper ({{ perspectiveLabel }} {{ ciLevel }}%)
+                        </span>
                         <span>{{ focusedRow.ci_upper.toFixed(4) }}</span>
                     </div>
                     <div class="detail-metric">
-                        <span class="detail-label">Dominant Claim Mix</span>
+                        <span class="detail-label">
+                            Dominant {{ perspectiveLabel }} Claim Mix
+                        </span>
                         <span>
                             {{ focusedRow.dominant_cola }}
                             ({{ focusedRow.dominant_cola_pct.toFixed(1) }}%)
@@ -65,11 +75,20 @@
             </q-card-section>
         </q-card>
 
-        <div v-if="props.showCharts" class="row q-col-gutter-md" :class="{ 'q-mt-md': props.showSummary }">
+        <div
+            v-if="props.showCharts"
+            class="row q-col-gutter-md"
+            :class="{ 'q-mt-md': props.showSummary }"
+        >
             <div class="col-12 col-md-6">
                 <q-card flat bordered>
                     <q-card-section>
-                        <div v-if="focusedRow" class="text-caption text-grey-7 q-mb-xs chart-rule-subtitle">{{ focusedRow.RuleName }}</div>
+                        <div
+                            v-if="focusedRow"
+                            class="text-caption text-grey-7 q-mb-xs chart-rule-subtitle"
+                        >
+                            {{ focusedRow.RuleName }}
+                        </div>
                         <div ref="ciChartEl" class="mini-chart"></div>
                     </q-card-section>
                 </q-card>
@@ -77,7 +96,12 @@
             <div class="col-12 col-md-6">
                 <q-card flat bordered>
                     <q-card-section>
-                        <div v-if="focusedRow" class="text-caption text-grey-7 q-mb-xs chart-rule-subtitle">{{ focusedRow.RuleName }}</div>
+                        <div
+                            v-if="focusedRow"
+                            class="text-caption text-grey-7 q-mb-xs chart-rule-subtitle"
+                        >
+                            {{ focusedRow.RuleName }}
+                        </div>
                         <div ref="mixChartEl" class="mini-chart"></div>
                     </q-card-section>
                 </q-card>
@@ -92,6 +116,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 import type { ApiBinaryFeatureRow } from '@/types/binary-feature-ae';
 import {
+    formatCurrency,
     formatPercentFromRatio,
     formatWholeNumber,
     truncateLabel,
@@ -99,16 +124,20 @@ import {
 
 import { COLA_DEFINITIONS } from '@/modules/binary-feature-ae/constants';
 
-const props = withDefaults(defineProps<{
-    rows: ApiBinaryFeatureRow[];
-    focusedRowId: string | null;
-    ciLevel: '95' | '90' | '80';
-    showSummary?: boolean;
-    showCharts?: boolean;
-}>(), {
-    showSummary: true,
-    showCharts: true,
-});
+const props = withDefaults(
+    defineProps<{
+        rows: ApiBinaryFeatureRow[];
+        perspective: 'count' | 'amount';
+        focusedRowId: string | null;
+        ciLevel: '95' | '90' | '80';
+        showSummary?: boolean;
+        showCharts?: boolean;
+    }>(),
+    {
+        showSummary: true,
+        showCharts: true,
+    },
+);
 
 const ciChartEl = ref<HTMLDivElement | null>(null);
 const mixChartEl = ref<HTMLDivElement | null>(null);
@@ -120,6 +149,10 @@ const focusedRow = computed(() => {
     return props.rows.find((row) => row.row_id === props.focusedRowId) ?? null;
 });
 
+const perspectiveLabel = computed(() => {
+    return props.perspective === 'count' ? 'Count' : 'Amount';
+});
+
 const ruleInsight = computed(() => {
     const row = focusedRow.value;
     if (!row) {
@@ -127,7 +160,11 @@ const ruleInsight = computed(() => {
     }
 
     const hitValues = props.rows.map((item) => item.hit_count).sort((a, b) => a - b);
-    const claimValues = props.rows.map((item) => item.claim_count).sort((a, b) => a - b);
+    const materialityValues = props.rows
+        .map((item) =>
+            props.perspective === 'count' ? item.claim_count : item.claim_amount,
+        )
+        .sort((a, b) => a - b);
     const widthValues = props.rows.map((item) => item.ci_width).sort((a, b) => a - b);
 
     const quantile = (values: number[], q: number) => {
@@ -140,7 +177,7 @@ const ruleInsight = computed(() => {
     };
 
     const hitP75 = quantile(hitValues, 0.75);
-    const claimP75 = quantile(claimValues, 0.75);
+    const materialityP75 = quantile(materialityValues, 0.75);
     const ciWidthP75 = quantile(widthValues, 0.75);
 
     const signal =
@@ -151,9 +188,13 @@ const ruleInsight = computed(() => {
               : 'Not clearly different from expected; the confidence interval crosses 1.0.';
 
     const scale =
-        row.hit_count >= hitP75 || row.claim_count >= claimP75
-            ? 'Material scale relative to the rest of the visible rules.'
-            : 'Lower-volume rule; interpret the ratio with some caution.';
+        props.perspective === 'count'
+            ? row.hit_count >= hitP75 || row.claim_count >= materialityP75
+                ? 'Material count scale relative to the rest of the visible rules.'
+                : 'Lower-volume count rule; interpret the ratio with some caution.'
+            : row.claim_amount >= materialityP75
+              ? 'Material amount scale relative to the rest of the visible rules.'
+              : 'Lower-dollar rule; interpret the ratio with some caution.';
 
     const stability =
         row.ci_width >= ciWidthP75
@@ -162,8 +203,8 @@ const ruleInsight = computed(() => {
 
     const mix =
         row.dominant_cola_pct >= 50
-            ? `Claim mix is concentrated in ${row.dominant_cola}.`
-            : `Claim mix is more balanced, though ${row.dominant_cola} is the largest component.`;
+            ? `${perspectiveLabel.value} claim mix is concentrated in ${row.dominant_cola}.`
+            : `${perspectiveLabel.value} claim mix is more balanced, though ${row.dominant_cola} is the largest component.`;
 
     return `${signal} ${scale} ${stability} ${mix}`;
 });
@@ -237,7 +278,7 @@ async function renderCharts() {
                 hovertemplate:
                     `<b>${row.rule}</b><br>` +
                     `${row.RuleName}<br>` +
-                    `A/E: ${row.ae_ratio.toFixed(4)}<br>` +
+                    `${perspectiveLabel.value} A/E: ${row.ae_ratio.toFixed(4)}<br>` +
                     `CI: [${ciLow.toFixed(4)}, ${ciHigh.toFixed(4)}]` +
                     '<extra></extra>',
                 showlegend: false,
@@ -245,12 +286,15 @@ async function renderCharts() {
         ],
         {
             template: 'plotly_white',
-            title: 'Selected Rule: A/E Confidence Interval',
+            title: `Selected Rule: ${perspectiveLabel.value} A/E Confidence Interval`,
             height: 260,
             margin: { l: 90, r: 20, t: 50, b: 40 },
             xaxis: {
-                title: 'A/E Ratio',
-                range: [Math.max(0, Math.min(ciLow, row.ae_ratio, 1) - 0.1), Math.max(ciHigh, row.ae_ratio, 1) + 0.1],
+                title: `A/E Ratio (${perspectiveLabel.value})`,
+                range: [
+                    Math.max(0, Math.min(ciLow, row.ae_ratio, 1) - 0.1),
+                    Math.max(ciHigh, row.ae_ratio, 1) + 0.1,
+                ],
             },
             yaxis: { title: '' },
             shapes: [
@@ -280,15 +324,19 @@ async function renderCharts() {
                 `<b>${row.rule}</b><br>` +
                 `Rule Name: ${row.RuleName}<br>` +
                 `Category: ${row.category}<br>` +
-                `A/E Ratio: ${row.ae_ratio.toFixed(4)}<br>` +
+                `${perspectiveLabel.value} A/E Ratio: ${row.ae_ratio.toFixed(4)}<br>` +
                 `Significance: ${row.significance_class}<br>` +
-                `Claim Count: ${row.claim_count.toLocaleString()}<br>` +
+                `${
+                    props.perspective === 'count'
+                        ? `Claim Count: ${row.claim_count.toLocaleString()}`
+                        : `Claim Amount: ${formatCurrency(row.claim_amount)}`
+                }<br>` +
                 `Share: %{x:.1f}%` +
                 '<extra></extra>',
         })),
         {
             template: 'plotly_white',
-            title: 'Selected Rule: Claim Mix (Share %)',
+            title: `Selected Rule: Claim Mix (${perspectiveLabel.value} Share %)`,
             barmode: 'stack',
             height: 260,
             margin: { l: 90, r: 20, t: 50, b: 40 },
@@ -304,7 +352,7 @@ onMounted(() => {
 });
 
 watch(
-    () => [props.rows, props.focusedRowId, props.ciLevel],
+    () => [props.rows, props.perspective, props.focusedRowId, props.ciLevel],
     () => {
         void renderCharts();
     },

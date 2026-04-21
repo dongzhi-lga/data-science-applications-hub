@@ -138,3 +138,47 @@ def test_get_config_file_path_resolves_through_storage_helper(
     file_path = get_config_file_path(config_id)
 
     assert file_path == canonical_root / "files" / config_id / "saved.csv"
+
+
+def test_invalid_legacy_binary_config_does_not_blank_config_list(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("INSIGHT_HUB_DATA_DIR", str(tmp_path))
+    canonical_root = tmp_path / ".insight-hub"
+    valid_config_id = "valid-config"
+    invalid_config_id = "legacy-binary-config"
+    _write_saved_config_tree(
+        storage_root=canonical_root,
+        config_id=valid_config_id,
+        stored_file_path=".insight-hub/files/valid-config/saved.csv",
+    )
+
+    configs_file = canonical_root / "dataset_configs.json"
+    payload = json.loads(configs_file.read_text(encoding="utf-8"))
+    payload.append(
+        {
+            "id": invalid_config_id,
+            "dataset_name": "legacy-binary",
+            "performance_type": PerformanceType.BINARY_FEATURE_AE.value,
+            "file_path": "legacy.csv",
+            "module_id": ModuleId.BINARY_FEATURE_AE.value,
+            "module_config": {
+                "rule": "rule",
+                "RuleName": "RuleName",
+                "first_date": "first_date",
+                "category": "category",
+                "hit_count": "hit_count",
+            },
+            "created_date": datetime(2025, 1, 2).isoformat(),
+        }
+    )
+    configs_file.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+    with TestClient(create_app()) as client:
+        response = client.get("/api/dataset-configs")
+        assert response.status_code == 200
+        body = response.json()
+
+    config_ids = [item["id"] for item in body["configs"]]
+    assert valid_config_id in config_ids
+    assert invalid_config_id not in config_ids

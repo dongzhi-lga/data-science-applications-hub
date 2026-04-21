@@ -1,4 +1,5 @@
 export type BinaryFeatureCiLevel = '95' | '90' | '80';
+export type BinaryFeaturePerspective = 'count' | 'amount';
 export type BinaryFeatureSignificance =
     | 'Elevated'
     | 'Uncertain'
@@ -8,6 +9,7 @@ export interface ApiBinaryFeatureKpis {
     visible_rule_count: number;
     median_hit_rate: number;
     median_claim_count: number;
+    median_claim_amount: number;
     median_ae: number;
     elevated_count: number;
     uncertain_count: number;
@@ -16,6 +18,7 @@ export interface ApiBinaryFeatureKpis {
 
 export interface ApiBinaryFeatureCalculateRequest {
     config_id: string;
+    perspective: BinaryFeaturePerspective;
     ci_level: BinaryFeatureCiLevel;
     categories: string[];
     significance_values: BinaryFeatureSignificance[];
@@ -26,6 +29,7 @@ export interface ApiBinaryFeatureCalculateRequest {
 
 export interface ApiBinaryFeatureRow {
     row_id: string;
+    rule_key: string;
     rule: string;
     RuleName: string;
     rule_label: string;
@@ -34,6 +38,7 @@ export interface ApiBinaryFeatureRow {
     hit_count: number;
     hit_rate: number;
     claim_count: number;
+    claim_amount: number;
     mec_sum: number;
     ae_ratio: number;
     ci_lower_95: number;
@@ -73,15 +78,8 @@ export interface ApiBinaryFeatureRow {
 
 export interface ApiBinaryFeatureCalculateResponse {
     dataset_name: string;
+    perspective: BinaryFeaturePerspective;
     available_categories: string[];
     kpis: ApiBinaryFeatureKpis;
     rows: ApiBinaryFeatureRow[];
-}
-
-export interface BinaryFeaturePinnedRule {
-    row_id: string;
-    rule: string;
-    RuleName: string;
-    ae_ratio: number;
-    significance_class: BinaryFeatureSignificance;
 }

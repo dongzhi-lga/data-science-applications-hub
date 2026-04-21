@@ -10,10 +10,11 @@ from app.modules.binary_feature_ae.models.triage import (
     ApiBinaryFeatureCalculateRequest,
     ApiBinaryFeatureCalculateResponse,
     ApiBinaryFeatureKpis,
+    ApiBinaryFeaturePerspective,
     ApiBinaryFeatureRow,
 )
 
-CANONICAL_FIELD_TO_LABEL: dict[str, str] = {
+SHARED_FIELD_LABELS: dict[str, str] = {
     "rule": "rule",
     "RuleName": "RuleName",
     "first_date": "first_date",
@@ -21,72 +22,47 @@ CANONICAL_FIELD_TO_LABEL: dict[str, str] = {
     "hit_count": "hit_count",
     "hit_rate": "hit_rate",
     "claim_count": "claim_count",
+    "claim_amount": "claim_amount",
     "mec_sum": "mec_sum",
-    "ae_ratio": "ae_ratio",
-    "ci_lower_95": "ci_lower_95",
-    "ci_upper_95": "ci_upper_95",
-    "ci_lower_90": "ci_lower_90",
-    "ci_upper_90": "ci_upper_90",
-    "ci_lower_80": "ci_lower_80",
-    "ci_upper_80": "ci_upper_80",
-    "cola_cancer_pct": "cola_cancer_pct",
-    "cola_heart_pct": "cola_heart_pct",
-    "cola_nervous_system_pct": "cola_nervous_system_pct",
-    "cola_non_natural_pct": "cola_non-natural_pct",
-    "cola_other_medical_pct": "cola_other_medical_pct",
-    "cola_respiratory_pct": "cola_respiratory_pct",
-    "cola_others_pct": "cola_others_pct",
 }
 
-REQUIRED_COLS = [
-    "rule",
-    "RuleName",
-    "first_date",
-    "category",
-    "hit_count",
-    "hit_rate",
-    "claim_count",
-    "mec_sum",
-    "ae_ratio",
-    "ci_lower_95",
-    "ci_upper_95",
-    "ci_lower_90",
-    "ci_upper_90",
-    "ci_lower_80",
-    "ci_upper_80",
-    "cola_cancer_pct",
-    "cola_heart_pct",
-    "cola_nervous_system_pct",
-    "cola_non_natural_pct",
-    "cola_other_medical_pct",
-    "cola_respiratory_pct",
-    "cola_others_pct",
+COLA_DEFINITIONS: list[tuple[str, str]] = [
+    ("cola_cancer_pct", "Cancer"),
+    ("cola_heart_pct", "Heart"),
+    ("cola_nervous_system_pct", "Nervous System"),
+    ("cola_non_natural_pct", "Non-natural"),
+    ("cola_other_medical_pct", "Other Medical"),
+    ("cola_respiratory_pct", "Respiratory"),
+    ("cola_others_pct", "Others"),
 ]
 
-COLA_COLS = [
-    "cola_cancer_pct",
-    "cola_heart_pct",
-    "cola_nervous_system_pct",
-    "cola_non_natural_pct",
-    "cola_other_medical_pct",
-    "cola_respiratory_pct",
-    "cola_others_pct",
-]
+CI_LEVELS = ("95", "90", "80")
 
-COLA_LABEL_MAP = {
-    "cola_cancer_pct": "Cancer",
-    "cola_heart_pct": "Heart",
-    "cola_nervous_system_pct": "Nervous System",
-    "cola_non_natural_pct": "Non-natural",
-    "cola_other_medical_pct": "Other Medical",
-    "cola_respiratory_pct": "Respiratory",
-    "cola_others_pct": "Others",
-}
-
-CI_LEVEL_MAP = {
-    "95": ("ci_lower_95", "ci_upper_95"),
-    "90": ("ci_lower_90", "ci_upper_90"),
-    "80": ("ci_lower_80", "ci_upper_80"),
+PERSPECTIVE_CONFIGS: dict[str, dict[str, object]] = {
+    ApiBinaryFeaturePerspective.COUNT.value: {
+        "ae_ratio_col": "ae_ratio_count",
+        "ci_cols": {
+            "95": ("ci_lower_95_count", "ci_upper_95_count"),
+            "90": ("ci_lower_90_count", "ci_upper_90_count"),
+            "80": ("ci_lower_80_count", "ci_upper_80_count"),
+        },
+        "cola_cols": [f"{base}_count" for base, _ in COLA_DEFINITIONS],
+        "dominant_labels": {f"{base}_count": label for base, label in COLA_DEFINITIONS},
+        "scale_col": "hit_count",
+        "sort_cols": ["claim_count", "hit_count"],
+    },
+    ApiBinaryFeaturePerspective.AMOUNT.value: {
+        "ae_ratio_col": "ae_ratio_amount",
+        "ci_cols": {
+            "95": ("ci_lower_95_amount", "ci_upper_95_amount"),
+            "90": ("ci_lower_90_amount", "ci_upper_90_amount"),
+            "80": ("ci_lower_80_amount", "ci_upper_80_amount"),
+        },
+        "cola_cols": [f"{base}_amount" for base, _ in COLA_DEFINITIONS],
+        "dominant_labels": {f"{base}_amount": label for base, label in COLA_DEFINITIONS},
+        "scale_col": "claim_amount",
+        "sort_cols": ["claim_amount", "claim_count"],
+    },
 }
 
 CONFIDENCE_BAND_ORDER = [
@@ -99,88 +75,178 @@ CONFIDENCE_BAND_ORDER = [
     "Below Expected 95%",
 ]
 
+REQUIRED_COLS = list(SHARED_FIELD_LABELS)
+for perspective in PERSPECTIVE_CONFIGS.values():
+    REQUIRED_COLS.append(str(perspective["ae_ratio_col"]))
+    ci_cols = perspective["ci_cols"]
+    for lo_col, hi_col in ci_cols.values():
+        REQUIRED_COLS.extend([lo_col, hi_col])
+    REQUIRED_COLS.extend(perspective["cola_cols"])
+
+
+def _rule_key_for(rule: str, first_date: str) -> str:
+    return f"{len(rule)}:{rule}|{len(first_date)}:{first_date}"
+
+
+def _build_required_label_map() -> dict[str, str]:
+    labels = dict(SHARED_FIELD_LABELS)
+    for base, _ in COLA_DEFINITIONS:
+        labels[f"{base}_count"] = (
+            f"{base.replace('cola_non_natural_pct', 'cola_non-natural_pct')}_count"
+        )
+        labels[f"{base}_amount"] = (
+            f"{base.replace('cola_non_natural_pct', 'cola_non-natural_pct')}_amount"
+        )
+    return labels
+
+
+REQUIRED_LABELS = _build_required_label_map()
+
+
+def _flatten_numeric_cols() -> list[str]:
+    numeric_cols = ["hit_count", "hit_rate", "claim_count", "claim_amount", "mec_sum"]
+    for perspective in PERSPECTIVE_CONFIGS.values():
+        numeric_cols.append(str(perspective["ae_ratio_col"]))
+        ci_cols = perspective["ci_cols"]
+        for lo_col, hi_col in ci_cols.values():
+            numeric_cols.extend([lo_col, hi_col])
+        numeric_cols.extend(perspective["cola_cols"])
+    return numeric_cols
+
+
+NUMERIC_COLS = _flatten_numeric_cols()
+
+
+def _project_perspective(
+    df: pd.DataFrame,
+    *,
+    perspective: str,
+    ci_level: str,
+) -> pd.DataFrame:
+    config = PERSPECTIVE_CONFIGS[perspective]
+    ci_cols: dict[str, tuple[str, str]] = config["ci_cols"]  # type: ignore[assignment]
+    dff = df.copy()
+
+    dff["ae_ratio"] = dff[str(config["ae_ratio_col"])]
+    for level, (lo_col, hi_col) in ci_cols.items():
+        dff[f"ci_lower_{level}"] = dff[lo_col]
+        dff[f"ci_upper_{level}"] = dff[hi_col]
+        dff[f"significance_class_{level}"] = dff[f"significance_class_{level}_{perspective}"]
+
+    active_ci_lower, active_ci_upper = ci_cols[ci_level]
+    dff["significance_class"] = dff[f"significance_class_{ci_level}"]
+    dff["ci_lower"] = dff[active_ci_lower]
+    dff["ci_upper"] = dff[active_ci_upper]
+    dff["ae_gap"] = dff[f"ae_gap_{perspective}"]
+    dff["abs_ae_gap"] = dff[f"abs_ae_gap_{perspective}"]
+    dff["ci_width"] = dff[f"ci_width_{perspective}"]
+    dff["impact_score"] = dff[f"impact_score_{perspective}"]
+    dff["dominant_cola"] = dff[f"dominant_cola_{perspective}"]
+    dff["dominant_cola_pct"] = dff[f"dominant_cola_pct_{perspective}"]
+    dff["confidence_band"] = dff[f"confidence_band_{perspective}"]
+
+    for base, _label in COLA_DEFINITIONS:
+        family_col = f"{base}_{perspective}"
+        dff[base] = dff[family_col]
+        dff[f"{base}_display"] = dff[f"{family_col}_display"]
+
+    return dff
+
+
+def _sort_rows(df: pd.DataFrame, *, perspective: str) -> pd.DataFrame:
+    sort_cols = ["impact_score", *PERSPECTIVE_CONFIGS[perspective]["sort_cols"]]
+    ascending = [False] * len(sort_cols)
+    return df.sort_values(sort_cols, ascending=ascending).reset_index(drop=True)
+
 
 def prepare_rule_df(df: pd.DataFrame) -> pd.DataFrame:
-    missing = [c for c in REQUIRED_COLS if c not in df.columns]
+    missing = [column for column in REQUIRED_COLS if column not in df.columns]
     if missing:
-        missing_labels = [CANONICAL_FIELD_TO_LABEL.get(name, name) for name in missing]
+        missing_labels = [REQUIRED_LABELS.get(name, name) for name in missing]
         raise ValueError(f"Missing required columns: {missing_labels}")
 
     dff = df.copy().reset_index(drop=True)
-    dff["row_id"] = dff.index.astype(str)
-    dff["rule"] = dff["rule"].astype(str)
+    dff["rule"] = dff["rule"].fillna("").astype(str)
     dff["RuleName"] = dff["RuleName"].fillna("").astype(str)
     dff["first_date"] = dff["first_date"].fillna("").astype(str)
     dff["category"] = dff["category"].fillna("Uncategorized").astype(str)
-
-    ci_cols = [c for pair in CI_LEVEL_MAP.values() for c in pair]
-    numeric_cols = [
-        "hit_count",
-        "hit_rate",
-        "claim_count",
-        "mec_sum",
-        "ae_ratio",
-    ] + ci_cols + COLA_COLS
-
-    for col in numeric_cols:
-        dff[col] = pd.to_numeric(dff[col], errors="coerce")
-    dff[numeric_cols] = dff[numeric_cols].fillna(0)
-
-    cola_max = dff[COLA_COLS].max().max()
-    cola_multiplier = 100.0 if cola_max <= 1.5 else 1.0
-    display_cola_cols: list[str] = []
-    for col in COLA_COLS:
-        display_col = f"{col}_display"
-        dff[display_col] = dff[col] * cola_multiplier
-        display_cola_cols.append(display_col)
-
+    dff["rule_key"] = [
+        _rule_key_for(rule=rule, first_date=first_date)
+        for rule, first_date in zip(dff["rule"], dff["first_date"], strict=False)
+    ]
+    dff["row_id"] = dff["rule_key"]
     dff["rule_label"] = dff["rule"] + " | " + dff["RuleName"]
 
-    for level, (lo_col, hi_col) in CI_LEVEL_MAP.items():
-        dff[f"significance_class_{level}"] = np.select(
-            [dff[lo_col] > 1.0, dff[hi_col] < 1.0],
-            ["Elevated", "Below Expected"],
-            default="Uncertain",
+    for column in NUMERIC_COLS:
+        dff[column] = pd.to_numeric(dff[column], errors="coerce")
+    dff[NUMERIC_COLS] = dff[NUMERIC_COLS].fillna(0)
+
+    for perspective_name, config in PERSPECTIVE_CONFIGS.items():
+        ci_cols: dict[str, tuple[str, str]] = config["ci_cols"]  # type: ignore[assignment]
+        cola_cols: list[str] = config["cola_cols"]  # type: ignore[assignment]
+        dominant_labels: dict[str, str] = config["dominant_labels"]  # type: ignore[assignment]
+        ae_ratio_col = str(config["ae_ratio_col"])
+        scale_col = str(config["scale_col"])
+
+        cola_max = dff[cola_cols].max().max()
+        cola_multiplier = 100.0 if float(cola_max) <= 1.5 else 1.0
+        display_cola_cols: list[str] = []
+        for cola_col in cola_cols:
+            display_col = f"{cola_col}_display"
+            dff[display_col] = dff[cola_col] * cola_multiplier
+            display_cola_cols.append(display_col)
+
+        for level, (lo_col, hi_col) in ci_cols.items():
+            dff[f"significance_class_{level}_{perspective_name}"] = np.select(
+                [dff[lo_col] > 1.0, dff[hi_col] < 1.0],
+                ["Elevated", "Below Expected"],
+                default="Uncertain",
+            )
+
+        dff[f"ae_gap_{perspective_name}"] = dff[ae_ratio_col] - 1.0
+        dff[f"abs_ae_gap_{perspective_name}"] = dff[f"ae_gap_{perspective_name}"].abs()
+        dff[f"ci_width_{perspective_name}"] = (
+            dff[ci_cols["95"][1]] - dff[ci_cols["95"][0]]
         )
-    dff["significance_class"] = dff["significance_class_95"]
+        dff[f"impact_score_{perspective_name}"] = np.log1p(
+            dff[scale_col].clip(lower=0)
+        ) * dff[f"abs_ae_gap_{perspective_name}"]
 
-    dff["ae_gap"] = dff["ae_ratio"] - 1.0
-    dff["abs_ae_gap"] = dff["ae_gap"].abs()
-    dff["ci_width"] = dff["ci_upper_95"] - dff["ci_lower_95"]
-    dff["impact_score"] = np.log1p(dff["hit_count"].clip(lower=0)) * dff["abs_ae_gap"]
+        if dff.empty:
+            dff[f"dominant_cola_{perspective_name}"] = ""
+            dff[f"dominant_cola_pct_{perspective_name}"] = 0.0
+        else:
+            dominant_idx = dff[display_cola_cols].values.argmax(axis=1)
+            dff[f"dominant_cola_{perspective_name}"] = [
+                dominant_labels[cola_cols[idx]] for idx in dominant_idx
+            ]
+            dff[f"dominant_cola_pct_{perspective_name}"] = dff[display_cola_cols].max(
+                axis=1
+            )
 
-    dominant_idx = dff[display_cola_cols].values.argmax(axis=1)
-    dff["dominant_cola"] = [COLA_LABEL_MAP[COLA_COLS[idx]] for idx in dominant_idx]
-    dff["dominant_cola_pct"] = dff[display_cola_cols].max(axis=1)
-
-    dff["confidence_band"] = pd.Categorical(
-        np.select(
-            [
-                dff["ci_lower_95"] > 1,
-                dff["ci_lower_90"] > 1,
-                dff["ci_lower_80"] > 1,
-                dff["ci_upper_95"] < 1,
-                dff["ci_upper_90"] < 1,
-                dff["ci_upper_80"] < 1,
-            ],
-            [
-                "Elevated 95%",
-                "Elevated 90%",
-                "Elevated 80%",
-                "Below Expected 95%",
-                "Below Expected 90%",
-                "Below Expected 80%",
-            ],
-            default="Uncertain",
-        ),
-        categories=CONFIDENCE_BAND_ORDER,
-        ordered=True,
-    )
-
-    dff = dff.sort_values(
-        ["impact_score", "claim_count", "hit_count"],
-        ascending=[False, False, False],
-    ).reset_index(drop=True)
+        dff[f"confidence_band_{perspective_name}"] = pd.Categorical(
+            np.select(
+                [
+                    dff[ci_cols["95"][0]] > 1,
+                    dff[ci_cols["90"][0]] > 1,
+                    dff[ci_cols["80"][0]] > 1,
+                    dff[ci_cols["95"][1]] < 1,
+                    dff[ci_cols["90"][1]] < 1,
+                    dff[ci_cols["80"][1]] < 1,
+                ],
+                [
+                    "Elevated 95%",
+                    "Elevated 90%",
+                    "Elevated 80%",
+                    "Below Expected 95%",
+                    "Below Expected 90%",
+                    "Below Expected 80%",
+                ],
+                default="Uncertain",
+            ),
+            categories=CONFIDENCE_BAND_ORDER,
+            ordered=True,
+        )
 
     return dff
 
@@ -237,6 +303,7 @@ def _build_kpis(df: pd.DataFrame) -> ApiBinaryFeatureKpis:
             visible_rule_count=0,
             median_hit_rate=0.0,
             median_claim_count=0.0,
+            median_claim_amount=0.0,
             median_ae=0.0,
             elevated_count=0,
             uncertain_count=0,
@@ -247,6 +314,7 @@ def _build_kpis(df: pd.DataFrame) -> ApiBinaryFeatureKpis:
         visible_rule_count=int(len(df)),
         median_hit_rate=float(df["hit_rate"].median()),
         median_claim_count=float(df["claim_count"].median()),
+        median_claim_amount=float(df["claim_amount"].median()),
         median_ae=float(df["ae_ratio"].median()),
         elevated_count=int((df["significance_class"] == "Elevated").sum()),
         uncertain_count=int((df["significance_class"] == "Uncertain").sum()),
@@ -267,9 +335,14 @@ def _serialize_value(value: object) -> object:
 
 
 def _serialize_rows(df: pd.DataFrame) -> list[ApiBinaryFeatureRow]:
+    allowed_fields = set(ApiBinaryFeatureRow.model_fields)
     rows: list[ApiBinaryFeatureRow] = []
     for record in df.to_dict(orient="records"):
-        clean = {key: _serialize_value(value) for key, value in record.items()}
+        clean = {
+            key: _serialize_value(value)
+            for key, value in record.items()
+            if key in allowed_fields
+        }
         clean["confidence_band"] = str(clean["confidence_band"])
         rows.append(ApiBinaryFeatureRow.model_validate(clean))
     return rows
@@ -282,28 +355,24 @@ def calculate_binary_feature_ae(
     dataset_name, base_df = _load_prepared_df_from_config(config_id=params.config_id)
     available_categories = sorted(base_df["category"].dropna().unique().tolist())
 
+    perspective = params.perspective.value
     ci_level = params.ci_level.value
-    ci_lower_col, ci_upper_col = CI_LEVEL_MAP[ci_level]
-
-    working_df = base_df.copy()
-    significance_col = f"significance_class_{ci_level}"
-    working_df["significance_class"] = working_df[significance_col]
+    projected_df = _project_perspective(base_df, perspective=perspective, ci_level=ci_level)
 
     filtered_df = apply_filters(
-        working_df,
+        projected_df,
         categories=params.categories,
         significance_values=[value.value for value in params.significance_values],
         search_text=params.search_text,
         min_hit_count=params.min_hit_count,
         min_claim_count=params.min_claim_count,
     )
-
-    filtered_df["ci_lower"] = filtered_df[ci_lower_col]
-    filtered_df["ci_upper"] = filtered_df[ci_upper_col]
+    filtered_df = _sort_rows(filtered_df, perspective=perspective)
     filtered_df["confidence_band"] = filtered_df["confidence_band"].astype(str)
 
     return ApiBinaryFeatureCalculateResponse(
         dataset_name=dataset_name,
+        perspective=params.perspective,
         available_categories=available_categories,
         kpis=_build_kpis(filtered_df),
         rows=_serialize_rows(filtered_df),

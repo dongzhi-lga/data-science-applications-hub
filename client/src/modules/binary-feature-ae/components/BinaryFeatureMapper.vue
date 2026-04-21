@@ -17,26 +17,35 @@
                 All required fields are mapped. Review any assignments below before saving.
             </q-banner>
 
-            <div class="row q-col-gutter-md">
-                <div
-                    v-for="field in fieldDefinitions"
-                    :key="field.key"
-                    class="col-12 col-md-6"
-                >
-                    <q-select
-                        :model-value="setupState[field.key]"
-                        :options="columnOptions"
-                        emit-value
-                        map-options
-                        outlined
-                        dense
-                        options-dense
-                        :label="`${field.label} *`"
-                        :hint="field.sourceName"
-                        :error="Boolean(errorsByField[field.key])"
-                        :error-message="errorsByField[field.key]"
-                        @update:model-value="updateField(field.key, $event)"
-                    />
+            <div
+                v-for="section in fieldSections"
+                :key="section.title"
+                class="q-mb-lg"
+            >
+                <div class="text-subtitle2 text-weight-medium q-mb-sm">
+                    {{ section.title }}
+                </div>
+                <div class="row q-col-gutter-md">
+                    <div
+                        v-for="field in section.fields"
+                        :key="field.key"
+                        class="col-12 col-md-6"
+                    >
+                        <q-select
+                            :model-value="setupState[field.key]"
+                            :options="columnOptions"
+                            emit-value
+                            map-options
+                            outlined
+                            dense
+                            options-dense
+                            :label="`${field.label} *`"
+                            :hint="field.sourceName"
+                            :error="Boolean(errorsByField[field.key])"
+                            :error-message="errorsByField[field.key]"
+                            @update:model-value="updateField(field.key, $event)"
+                        />
+                    </div>
                 </div>
             </div>
         </q-card-section>
@@ -48,7 +57,10 @@ import { computed, watch } from 'vue';
 
 import type { ModuleFieldError } from '@/core/registry';
 import type { ApiCoreDatasetSchemaResults } from '@/core/types/schema';
-import { BINARY_FEATURE_FIELD_DEFINITIONS } from '@/modules/binary-feature-ae/constants';
+import {
+    BINARY_FEATURE_FIELD_DEFINITIONS,
+    BINARY_FEATURE_FIELD_SECTIONS,
+} from '@/modules/binary-feature-ae/constants';
 import type { BinaryFeatureAeSetupState } from '@/modules/binary-feature-ae/definition';
 
 const props = defineProps<{
@@ -63,6 +75,7 @@ const emit = defineEmits<{
 }>();
 
 const fieldDefinitions = BINARY_FEATURE_FIELD_DEFINITIONS;
+const fieldSections = BINARY_FEATURE_FIELD_SECTIONS;
 
 const errorsByField = computed<Record<string, string>>(() => {
     const next: Record<string, string> = {};

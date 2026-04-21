@@ -47,21 +47,36 @@ class ApiBinaryFeatureAeModuleConfig(BaseModel):
     hit_count: str
     hit_rate: str
     claim_count: str
+    claim_amount: str
     mec_sum: str
-    ae_ratio: str
-    ci_lower_95: str
-    ci_upper_95: str
-    ci_lower_90: str
-    ci_upper_90: str
-    ci_lower_80: str
-    ci_upper_80: str
-    cola_cancer_pct: str
-    cola_heart_pct: str
-    cola_nervous_system_pct: str
-    cola_non_natural_pct: str
-    cola_other_medical_pct: str
-    cola_respiratory_pct: str
-    cola_others_pct: str
+    ae_ratio_count: str
+    ci_lower_95_count: str
+    ci_upper_95_count: str
+    ci_lower_90_count: str
+    ci_upper_90_count: str
+    ci_lower_80_count: str
+    ci_upper_80_count: str
+    cola_cancer_pct_count: str
+    cola_heart_pct_count: str
+    cola_nervous_system_pct_count: str
+    cola_non_natural_pct_count: str
+    cola_other_medical_pct_count: str
+    cola_respiratory_pct_count: str
+    cola_others_pct_count: str
+    ae_ratio_amount: str
+    ci_lower_95_amount: str
+    ci_upper_95_amount: str
+    ci_lower_90_amount: str
+    ci_upper_90_amount: str
+    ci_lower_80_amount: str
+    ci_upper_80_amount: str
+    cola_cancer_pct_amount: str
+    cola_heart_pct_amount: str
+    cola_nervous_system_pct_amount: str
+    cola_non_natural_pct_amount: str
+    cola_other_medical_pct_amount: str
+    cola_respiratory_pct_amount: str
+    cola_others_pct_amount: str
 
 
 ApiModuleConfig = ApiMortalityAeModuleConfig | ApiBinaryFeatureAeModuleConfig
