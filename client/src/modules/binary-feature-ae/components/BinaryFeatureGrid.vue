@@ -42,7 +42,7 @@ const emit = defineEmits<{
 
 const pagination = ref<QTableProps['pagination']>({
     page: 1,
-    sortBy: 'impact_score',
+    sortBy: 'ae_ratio',
     descending: true,
     rowsPerPage: 10,
 });
@@ -148,14 +148,6 @@ const columns = computed<QTableColumn<ApiBinaryFeatureRow>[]>(() => {
             align: 'left',
             sortable: true,
         },
-        {
-            name: 'impact_score',
-            label: 'Impact Score',
-            field: 'impact_score',
-            align: 'right',
-            sortable: true,
-            format: (value: number) => value.toFixed(4),
-        },
     ];
 });
 
@@ -169,22 +161,22 @@ watch(
 
         if (
             nextPerspective === 'amount' &&
-            currentPagination.sortBy === 'claim_count'
+            ['claim_count', 'impact_score'].includes(String(currentPagination.sortBy))
         ) {
             pagination.value = {
                 ...currentPagination,
-                sortBy: 'impact_score',
+                sortBy: 'ae_ratio',
                 descending: true,
             };
         }
 
         if (
             nextPerspective === 'count' &&
-            currentPagination.sortBy === 'man_sum'
+            ['man_sum', 'impact_score'].includes(String(currentPagination.sortBy))
         ) {
             pagination.value = {
                 ...currentPagination,
-                sortBy: 'impact_score',
+                sortBy: 'ae_ratio',
                 descending: true,
             };
         }

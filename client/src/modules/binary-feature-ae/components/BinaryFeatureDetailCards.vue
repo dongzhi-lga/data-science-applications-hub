@@ -63,10 +63,6 @@
                             ({{ focusedRow.dominant_cola_pct.toFixed(1) }}%)
                         </span>
                     </div>
-                    <div class="detail-metric">
-                        <span class="detail-label">Impact Score</span>
-                        <span>{{ focusedRow.impact_score.toFixed(4) }}</span>
-                    </div>
                 </div>
             </q-card-section>
 
