@@ -26,7 +26,7 @@ export interface ApiBinaryFeatureAeModuleConfig {
     hit_rate: string;
     claim_count: string;
     claim_amount: string;
-    man_sum: string;
+    men_sum: string;
     mec_sum: string;
     ae_ratio_count: string;
     ci_lower_95_count: string;

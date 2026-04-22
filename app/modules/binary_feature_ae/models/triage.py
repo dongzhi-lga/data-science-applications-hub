@@ -68,7 +68,7 @@ class ApiBinaryFeatureRow(BaseModel):
     hit_rate: float
     claim_count: float
     claim_amount: float
-    man_sum: float
+    men_sum: float
     mec_sum: float
     ae_ratio: float
     ci_lower_95: float

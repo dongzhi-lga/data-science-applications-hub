@@ -182,3 +182,80 @@ def test_invalid_legacy_binary_config_does_not_blank_config_list(
     config_ids = [item["id"] for item in body["configs"]]
     assert valid_config_id in config_ids
     assert invalid_config_id not in config_ids
+
+
+def test_legacy_binary_config_with_man_sum_is_rejected(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("INSIGHT_HUB_DATA_DIR", str(tmp_path))
+    canonical_root = tmp_path / ".insight-hub"
+    valid_config_id = "valid-config"
+    legacy_config_id = "legacy-man-sum-config"
+    _write_saved_config_tree(
+        storage_root=canonical_root,
+        config_id=valid_config_id,
+        stored_file_path=".insight-hub/files/valid-config/saved.csv",
+    )
+
+    configs_file = canonical_root / "dataset_configs.json"
+    payload = json.loads(configs_file.read_text(encoding="utf-8"))
+    payload.append(
+        {
+            "id": legacy_config_id,
+            "dataset_name": "legacy-binary",
+            "performance_type": PerformanceType.BINARY_FEATURE_AE.value,
+            "file_path": "legacy.csv",
+            "module_id": ModuleId.BINARY_FEATURE_AE.value,
+            "module_config": {
+                "rule": "rule",
+                "RuleName": "RuleName",
+                "first_date": "first_date",
+                "category": "category",
+                "hit_count": "hit_count",
+                "hit_rate": "hit_rate",
+                "claim_count": "claim_count",
+                "claim_amount": "claim_amount",
+                "man_sum": "man_sum",
+                "mec_sum": "mec_sum",
+                "ae_ratio_count": "ae_ratio_count",
+                "ci_lower_95_count": "ci_lower_95_count",
+                "ci_upper_95_count": "ci_upper_95_count",
+                "ci_lower_90_count": "ci_lower_90_count",
+                "ci_upper_90_count": "ci_upper_90_count",
+                "ci_lower_80_count": "ci_lower_80_count",
+                "ci_upper_80_count": "ci_upper_80_count",
+                "cola_cancer_pct_count": "cola_cancer_pct_count",
+                "cola_heart_pct_count": "cola_heart_pct_count",
+                "cola_nervous_system_pct_count": "cola_nervous_system_pct_count",
+                "cola_non_natural_pct_count": "cola_non_natural_pct_count",
+                "cola_other_medical_pct_count": "cola_other_medical_pct_count",
+                "cola_respiratory_pct_count": "cola_respiratory_pct_count",
+                "cola_others_pct_count": "cola_others_pct_count",
+                "ae_ratio_amount": "ae_ratio_amount",
+                "ci_lower_95_amount": "ci_lower_95_amount",
+                "ci_upper_95_amount": "ci_upper_95_amount",
+                "ci_lower_90_amount": "ci_lower_90_amount",
+                "ci_upper_90_amount": "ci_upper_90_amount",
+                "ci_lower_80_amount": "ci_lower_80_amount",
+                "ci_upper_80_amount": "ci_upper_80_amount",
+                "cola_cancer_pct_amount": "cola_cancer_pct_amount",
+                "cola_heart_pct_amount": "cola_heart_pct_amount",
+                "cola_nervous_system_pct_amount": "cola_nervous_system_pct_amount",
+                "cola_non_natural_pct_amount": "cola_non_natural_pct_amount",
+                "cola_other_medical_pct_amount": "cola_other_medical_pct_amount",
+                "cola_respiratory_pct_amount": "cola_respiratory_pct_amount",
+                "cola_others_pct_amount": "cola_others_pct_amount",
+            },
+            "created_date": datetime(2025, 1, 3).isoformat(),
+        }
+    )
+    configs_file.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+    with TestClient(create_app()) as client:
+        response = client.get("/api/dataset-configs")
+        assert response.status_code == 200
+        body = response.json()
+
+    config_ids = [item["id"] for item in body["configs"]]
+    assert valid_config_id in config_ids
+    assert legacy_config_id not in config_ids

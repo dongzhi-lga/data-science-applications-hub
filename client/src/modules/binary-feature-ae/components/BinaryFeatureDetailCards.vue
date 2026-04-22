@@ -35,6 +35,10 @@
                         <span>{{ formatCurrency(focusedRow.claim_amount) }}</span>
                     </div>
                     <div class="detail-metric">
+                        <span class="detail-label">MEN Sum</span>
+                        <span>{{ formatCurrency(focusedRow.men_sum) }}</span>
+                    </div>
+                    <div class="detail-metric">
                         <span class="detail-label">MEC Sum</span>
                         <span>{{ focusedRow.mec_sum.toFixed(2) }}</span>
                     </div>

@@ -85,7 +85,7 @@ def test_binary_feature_configs_persist_with_widened_mapping_schema(
             hit_rate="hit_rate",
             claim_count="claim_count",
             claim_amount="claim_amount",
-            man_sum="man_sum",
+            men_sum="men_sum",
             mec_sum="mec_sum",
             ae_ratio_count="ae_ratio_count",
             ci_lower_95_count="ci_lower_95_count",
@@ -121,7 +121,7 @@ def test_binary_feature_configs_persist_with_widened_mapping_schema(
     save_uploaded_file(
         config.id,
         BytesIO(
-            b"rule,RuleName,first_date,category,hit_count,hit_rate,claim_count,claim_amount,man_sum,mec_sum,"
+            b"rule,RuleName,first_date,category,hit_count,hit_rate,claim_count,claim_amount,men_sum,mec_sum,"
             b"ae_ratio_count,ci_lower_95_count,ci_upper_95_count,ci_lower_90_count,ci_upper_90_count,"
             b"ci_lower_80_count,ci_upper_80_count,cola_cancer_pct_count,cola_heart_pct_count,"
             b"cola_nervous_system_pct_count,cola_non-natural_pct_count,cola_other_medical_pct_count,"
@@ -142,7 +142,7 @@ def test_binary_feature_configs_persist_with_widened_mapping_schema(
 
     saved = next(item for item in body["configs"] if item["id"] == config.id)
     assert saved["module_config"]["claim_amount"] == "claim_amount"
-    assert saved["module_config"]["man_sum"] == "man_sum"
+    assert saved["module_config"]["men_sum"] == "men_sum"
     assert saved["module_config"]["ae_ratio_count"] == "ae_ratio_count"
     assert saved["module_config"]["ae_ratio_amount"] == "ae_ratio_amount"
 

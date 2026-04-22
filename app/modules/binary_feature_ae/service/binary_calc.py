@@ -23,7 +23,7 @@ SHARED_FIELD_LABELS: dict[str, str] = {
     "hit_rate": "hit_rate",
     "claim_count": "claim_count",
     "claim_amount": "claim_amount",
-    "man_sum": "man_sum",
+    "men_sum": "men_sum",
     "mec_sum": "mec_sum",
 }
 
@@ -110,7 +110,7 @@ def _flatten_numeric_cols() -> list[str]:
         "hit_rate",
         "claim_count",
         "claim_amount",
-        "man_sum",
+        "men_sum",
         "mec_sum",
     ]
     for perspective in PERSPECTIVE_CONFIGS.values():

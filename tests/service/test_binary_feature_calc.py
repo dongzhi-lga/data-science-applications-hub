@@ -37,7 +37,7 @@ def _sample_binary_df() -> pd.DataFrame:
                 "hit_rate": 0.12,
                 "claim_count": 20,
                 "claim_amount": 500000,
-                "man_sum": 450000,
+                "men_sum": 450000,
                 "mec_sum": 18,
                 "ae_ratio_count": 1.4,
                 "ci_lower_95_count": 1.2,
@@ -77,7 +77,7 @@ def _sample_binary_df() -> pd.DataFrame:
                 "hit_rate": 0.02,
                 "claim_count": 6,
                 "claim_amount": 200000,
-                "man_sum": 180000,
+                "men_sum": 180000,
                 "mec_sum": 8,
                 "ae_ratio_count": 0.7,
                 "ci_lower_95_count": 0.5,
@@ -117,7 +117,7 @@ def _sample_binary_df() -> pd.DataFrame:
                 "hit_rate": 0.01,
                 "claim_count": 3,
                 "claim_amount": 25000,
-                "man_sum": 23000,
+                "men_sum": 23000,
                 "mec_sum": 4,
                 "ae_ratio_count": 1.05,
                 "ci_lower_95_count": 0.8,
@@ -162,7 +162,7 @@ def _module_config() -> ApiBinaryFeatureAeModuleConfig:
         hit_rate="hit_rate",
         claim_count="claim_count",
         claim_amount="claim_amount",
-        man_sum="man_sum",
+        men_sum="men_sum",
         mec_sum="mec_sum",
         ae_ratio_count="ae_ratio_count",
         ci_lower_95_count="ci_lower_95_count",
@@ -205,7 +205,7 @@ def test_prepare_rule_df_normalizes_and_derives_metrics() -> None:
 
     top = prepared.loc[prepared["rule"] == "R1"].iloc[0]
     assert top["rule_key"] == top["row_id"]
-    assert top["man_sum"] == pytest.approx(450000)
+    assert top["men_sum"] == pytest.approx(450000)
     assert top["significance_class_95_count"] == "Elevated"
     assert top["significance_class_95_amount"] == "Below Expected"
     assert top["confidence_band_count"] == "Elevated 95%"
@@ -333,7 +333,7 @@ def test_calculate_binary_feature_ae_switches_perspective_aliases_and_sorting(
     assert count_r1.ci_lower == pytest.approx(count_r1.ci_lower_95)
 
     assert amount_r1.ae_ratio == pytest.approx(0.78)
-    assert amount_r1.man_sum == pytest.approx(450000)
+    assert amount_r1.men_sum == pytest.approx(450000)
     assert amount_r1.significance_class == ApiBinaryFeatureSignificance.BELOW_EXPECTED
     assert amount_r1.dominant_cola == "Heart"
     assert amount_r1.dominant_cola_pct == pytest.approx(45.0)
@@ -389,5 +389,5 @@ def test_calculate_binary_feature_ae_from_saved_config(
     assert response.kpis.visible_rule_count == 2
     assert response.kpis.median_claim_amount == pytest.approx(262500.0)
     assert {row.rule for row in response.rows} == {"R1", "R3"}
-    assert response.rows[0].man_sum > 0
+    assert response.rows[0].men_sum > 0
     assert response.rows[0].ci_lower == response.rows[0].ci_lower_95

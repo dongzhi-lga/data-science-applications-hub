@@ -52,24 +52,36 @@ const perspectiveLabel = computed(() =>
 );
 
 const columns = computed<QTableColumn<ApiBinaryFeatureRow>[]>(() => {
-    const activeMaterialityColumn: QTableColumn<ApiBinaryFeatureRow> =
+    const perspectiveColumns: QTableColumn<ApiBinaryFeatureRow>[] =
         props.perspective === 'count'
-            ? {
-                  name: 'claim_count',
-                  label: 'Claim Count',
-                  field: 'claim_count',
-                  align: 'right',
-                  sortable: true,
-                  format: (value: number) => formatWholeNumber(value),
-              }
-            : {
-                  name: 'man_sum',
-                  label: 'MAN Sum',
-                  field: 'man_sum',
-                  align: 'right',
-                  sortable: true,
-                  format: (value: number) => formatCurrency(value),
-              };
+            ? [
+                  {
+                      name: 'claim_count',
+                      label: 'Claim Count',
+                      field: 'claim_count',
+                      align: 'right',
+                      sortable: true,
+                      format: (value: number) => formatWholeNumber(value),
+                  },
+              ]
+            : [
+                  {
+                      name: 'claim_amount',
+                      label: 'Claim Amount',
+                      field: 'claim_amount',
+                      align: 'right',
+                      sortable: true,
+                      format: (value: number) => formatCurrency(value),
+                  },
+                  {
+                      name: 'men_sum',
+                      label: 'MEN Sum',
+                      field: 'men_sum',
+                      align: 'right',
+                      sortable: true,
+                      format: (value: number) => formatCurrency(value),
+                  },
+              ];
 
     return [
         {
@@ -109,7 +121,7 @@ const columns = computed<QTableColumn<ApiBinaryFeatureRow>[]>(() => {
             sortable: true,
             format: (value: number) => formatPercentFromRatio(value),
         },
-        activeMaterialityColumn,
+        ...perspectiveColumns,
         {
             name: 'ae_ratio',
             label: `${perspectiveLabel.value} A/E Ratio`,
@@ -172,7 +184,9 @@ watch(
 
         if (
             nextPerspective === 'count' &&
-            ['man_sum', 'impact_score'].includes(String(currentPagination.sortBy))
+            ['claim_amount', 'men_sum', 'impact_score'].includes(
+                String(currentPagination.sortBy),
+            )
         ) {
             pagination.value = {
                 ...currentPagination,

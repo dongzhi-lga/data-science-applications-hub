@@ -39,7 +39,7 @@ export interface ApiBinaryFeatureRow {
     hit_rate: number;
     claim_count: number;
     claim_amount: number;
-    man_sum: number;
+    men_sum: number;
     mec_sum: number;
     ae_ratio: number;
     ci_lower_95: number;
