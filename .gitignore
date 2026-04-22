@@ -10,3 +10,5 @@ client/dist/
 .aemonitor
 .insight-hub
 .insight-hub.migrating
+
+files_for_hub/
