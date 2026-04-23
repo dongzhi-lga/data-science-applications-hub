@@ -111,6 +111,7 @@ class ApiBinaryFeatureCalculateResponse(BaseModel):
 
     dataset_name: str
     perspective: ApiBinaryFeaturePerspective
+    state_fingerprint: str
     available_categories: list[str]
     kpis: ApiBinaryFeatureKpis
     rows: list[ApiBinaryFeatureRow]

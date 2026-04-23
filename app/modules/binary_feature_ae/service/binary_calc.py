@@ -360,28 +360,17 @@ def calculate_binary_feature_ae(
     *,
     params: ApiBinaryFeatureCalculateRequest,
 ) -> ApiBinaryFeatureCalculateResponse:
-    dataset_name, base_df = _load_prepared_df_from_config(config_id=params.config_id)
-    available_categories = sorted(base_df["category"].dropna().unique().tolist())
-
-    perspective = params.perspective.value
-    ci_level = params.ci_level.value
-    projected_df = _project_perspective(base_df, perspective=perspective, ci_level=ci_level)
-
-    filtered_df = apply_filters(
-        projected_df,
-        categories=params.categories,
-        significance_values=[value.value for value in params.significance_values],
-        search_text=params.search_text,
-        min_hit_count=params.min_hit_count,
-        min_claim_count=params.min_claim_count,
+    from app.modules.binary_feature_ae.service.view_state import (
+        build_binary_feature_view_state,
     )
-    filtered_df = _sort_rows(filtered_df, perspective=perspective)
-    filtered_df["confidence_band"] = filtered_df["confidence_band"].astype(str)
+
+    view_state = build_binary_feature_view_state(params)
 
     return ApiBinaryFeatureCalculateResponse(
-        dataset_name=dataset_name,
+        dataset_name=view_state.dataset_name,
         perspective=params.perspective,
-        available_categories=available_categories,
-        kpis=_build_kpis(filtered_df),
-        rows=_serialize_rows(filtered_df),
+        state_fingerprint=view_state.view_fingerprint,
+        available_categories=view_state.available_categories,
+        kpis=view_state.kpis,
+        rows=_serialize_rows(view_state.filtered_sorted_df),
     )
