@@ -2,9 +2,16 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
 
+from app.modules.binary_feature_ae.models.ai import (
+    ApiBinaryFeatureAiExplainRuleRequest,
+    ApiBinaryFeatureAiResponse,
+)
 from app.modules.binary_feature_ae.models.triage import (
     ApiBinaryFeatureCalculateRequest,
     ApiBinaryFeatureCalculateResponse,
+)
+from app.modules.binary_feature_ae.service.ai_explain import (
+    perform_binary_feature_explain_rule,
 )
 from app.modules.binary_feature_ae.service.binary_calc import calculate_binary_feature_ae
 
@@ -20,5 +27,18 @@ def binary_feature_calculate(
 ) -> ApiBinaryFeatureCalculateResponse:
     try:
         return calculate_binary_feature_ae(params=params)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post(
+    "/api/binary-feature-ae/ai/explain-rule",
+    response_model=ApiBinaryFeatureAiResponse,
+)
+def binary_feature_explain_rule(
+    params: ApiBinaryFeatureAiExplainRuleRequest,
+) -> ApiBinaryFeatureAiResponse:
+    try:
+        return perform_binary_feature_explain_rule(params=params)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

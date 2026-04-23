@@ -9,9 +9,6 @@
                 <q-badge color="grey-8" class="q-mt-sm">
                     {{ focusedRow.significance_class }}
                 </q-badge>
-                <q-banner class="bg-grey-2 text-grey-9 q-mt-md" rounded dense>
-                    {{ ruleInsight }}
-                </q-banner>
 
                 <div class="detail-metrics q-mt-md">
                     <div class="detail-metric">
@@ -151,62 +148,6 @@ const focusedRow = computed(() => {
 
 const perspectiveLabel = computed(() => {
     return props.perspective === 'count' ? 'Count' : 'Amount';
-});
-
-const ruleInsight = computed(() => {
-    const row = focusedRow.value;
-    if (!row) {
-        return '';
-    }
-
-    const hitValues = props.rows.map((item) => item.hit_count).sort((a, b) => a - b);
-    const materialityValues = props.rows
-        .map((item) =>
-            props.perspective === 'count' ? item.claim_count : item.claim_amount,
-        )
-        .sort((a, b) => a - b);
-    const widthValues = props.rows.map((item) => item.ci_width).sort((a, b) => a - b);
-
-    const quantile = (values: number[], q: number) => {
-        if (!values.length) return 0;
-        const index = Math.min(
-            values.length - 1,
-            Math.max(0, Math.floor((values.length - 1) * q)),
-        );
-        return values[index];
-    };
-
-    const hitP75 = quantile(hitValues, 0.75);
-    const materialityP75 = quantile(materialityValues, 0.75);
-    const ciWidthP75 = quantile(widthValues, 0.75);
-
-    const signal =
-        row.ci_lower > 1
-            ? 'Statistically elevated above expected.'
-            : row.ci_upper < 1
-              ? 'Statistically below expected.'
-              : 'Not clearly different from expected; the confidence interval crosses 1.0.';
-
-    const scale =
-        props.perspective === 'count'
-            ? row.hit_count >= hitP75 || row.claim_count >= materialityP75
-                ? 'Material count scale relative to the rest of the visible rules.'
-                : 'Lower-volume count rule; interpret the ratio with some caution.'
-            : row.claim_amount >= materialityP75
-              ? 'Material amount scale relative to the rest of the visible rules.'
-              : 'Lower-dollar rule; interpret the ratio with some caution.';
-
-    const stability =
-        row.ci_width >= ciWidthP75
-            ? 'Uncertainty is relatively wide.'
-            : 'Confidence interval is relatively tighter.';
-
-    const mix =
-        row.dominant_cola_pct >= 50
-            ? `${perspectiveLabel.value} claim mix is concentrated in ${row.dominant_cola}.`
-            : `${perspectiveLabel.value} claim mix is more balanced, though ${row.dominant_cola} is the largest component.`;
-
-    return `${signal} ${scale} ${stability} ${mix}`;
 });
 
 function buildEmptyFigure(message: string, height = 260) {

@@ -4,6 +4,23 @@ export type BinaryFeatureSignificance =
     | 'Elevated'
     | 'Uncertain'
     | 'Below Expected';
+export type BinaryFeatureAiAction =
+    | 'summarize_view'
+    | 'explain_rule'
+    | 'compare_rules'
+    | 'analyze_divergence';
+export type BinaryFeatureAiSourceMode = 'llm' | 'fallback';
+export type BinaryFeatureAiSeverity = 'high' | 'medium' | 'low' | 'neutral';
+export type BinaryFeatureAiReasonType =
+    | 'top_impact'
+    | 'elevated_95'
+    | 'elevated_90'
+    | 'elevated_80'
+    | 'below_expected'
+    | 'wide_uncertainty'
+    | 'dominant_cola_concentration'
+    | 'count_amount_divergence'
+    | 'selected_for_comparison';
 
 export interface ApiBinaryFeatureKpis {
     visible_rule_count: number;
@@ -80,7 +97,41 @@ export interface ApiBinaryFeatureRow {
 export interface ApiBinaryFeatureCalculateResponse {
     dataset_name: string;
     perspective: BinaryFeaturePerspective;
+    state_fingerprint: string;
     available_categories: string[];
     kpis: ApiBinaryFeatureKpis;
     rows: ApiBinaryFeatureRow[];
+}
+
+export interface ApiBinaryFeatureAiEvidenceRef {
+    row_id: string;
+    rule_label: string;
+    reason_type: BinaryFeatureAiReasonType;
+    reason_label: string;
+    severity: BinaryFeatureAiSeverity;
+}
+
+export interface ApiBinaryFeatureAiExplainRuleRequest {
+    config_id: string;
+    perspective: BinaryFeaturePerspective;
+    ci_level: BinaryFeatureCiLevel;
+    categories: string[];
+    significance_values: BinaryFeatureSignificance[];
+    search_text: string | null;
+    min_hit_count: number | null;
+    min_claim_count: number | null;
+    row_id: string;
+}
+
+export interface ApiBinaryFeatureAiResponse {
+    action_type: BinaryFeatureAiAction;
+    state_fingerprint: string;
+    source_mode: BinaryFeatureAiSourceMode;
+    summary_text: string;
+    key_findings: string[];
+    caution_flags: string[];
+    next_review_steps: string[];
+    evidence_refs: ApiBinaryFeatureAiEvidenceRef[];
+    used_reference_context: boolean;
+    reference_sources: string[];
 }

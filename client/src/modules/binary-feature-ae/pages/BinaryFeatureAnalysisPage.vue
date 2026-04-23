@@ -405,6 +405,15 @@
                             :show-charts="false"
                         />
 
+                        <BinaryFeatureAiPanel
+                            class="q-mt-md"
+                            :focused-row="focusedRow"
+                            :result="aiExplainResponse"
+                            :loading="aiExplainLoading"
+                            :error="aiExplainError"
+                            @explain="onExplainRule"
+                        />
+
                         <q-card class="q-mt-md section-card">
                             <q-card-section class="row items-center justify-between">
                                 <div>
@@ -530,8 +539,12 @@ import {
     getDatasetConfig,
     getDatasetConfigs,
 } from '@/core/api/dataset-configs';
+import BinaryFeatureAiPanel from '@/modules/binary-feature-ae/components/BinaryFeatureAiPanel.vue';
 import BinaryFeatureCompareCharts from '@/modules/binary-feature-ae/components/BinaryFeatureCompareCharts.vue';
-import { postBinaryFeatureCalculate } from '@/modules/binary-feature-ae/api';
+import {
+    postBinaryFeatureCalculate,
+    postBinaryFeatureExplainRule,
+} from '@/modules/binary-feature-ae/api';
 import BinaryFeatureDetailCards from '@/modules/binary-feature-ae/components/BinaryFeatureDetailCards.vue';
 import BinaryFeatureGrid from '@/modules/binary-feature-ae/components/BinaryFeatureGrid.vue';
 import BinaryFeatureScatterPlot from '@/modules/binary-feature-ae/components/BinaryFeatureScatterPlot.vue';
@@ -543,6 +556,7 @@ import {
     SIGNIFICANCE_OPTIONS,
 } from '@/modules/binary-feature-ae/constants';
 import type {
+    ApiBinaryFeatureAiResponse,
     ApiBinaryFeatureCalculateResponse,
     ApiBinaryFeatureRow,
     BinaryFeatureCiLevel,
@@ -568,6 +582,9 @@ const loading = ref(false);
 const errorMsg = ref<string | null>(null);
 const responseData = ref<ApiBinaryFeatureCalculateResponse | null>(null);
 const activeDatasetName = ref<string | null>(null);
+const aiExplainLoading = ref(false);
+const aiExplainError = ref<string | null>(null);
+const aiExplainResponse = ref<ApiBinaryFeatureAiResponse | null>(null);
 
 const categories = ref<string[]>([]);
 const significanceValues = ref<BinaryFeatureSignificance[]>([...SIGNIFICANCE_OPTIONS]);
@@ -596,6 +613,7 @@ const pinnedRuleKeys = ref<string[]>([]);
 
 const activeConfig = ref<ApiDatasetConfig | null>(null);
 let abortController: AbortController | null = null;
+let explainAbortController: AbortController | null = null;
 let configSelectionRequestId = 0;
 
 const routeConfigId = computed(() => {
@@ -727,6 +745,7 @@ const debouncedMinClaimCount = useDebouncedRef(minClaimCount, 250);
 function resetDatasetState() {
     abortController?.abort();
     abortController = null;
+    clearExplainState();
     loading.value = false;
     activeConfig.value = null;
     activeDatasetName.value = null;
@@ -745,6 +764,14 @@ function resetDatasetState() {
     selectedRowIds.value = [];
     focusedRowId.value = null;
     pinnedRuleKeys.value = [];
+}
+
+function clearExplainState() {
+    explainAbortController?.abort();
+    explainAbortController = null;
+    aiExplainLoading.value = false;
+    aiExplainError.value = null;
+    aiExplainResponse.value = null;
 }
 
 async function ensureBinaryFeatureConfig(configId: string) {
@@ -840,6 +867,44 @@ async function loadData() {
     }
 }
 
+async function onExplainRule() {
+    if (!activeConfig.value || !focusedRow.value) {
+        return;
+    }
+
+    clearExplainState();
+    explainAbortController = new AbortController();
+    const signal = explainAbortController.signal;
+    aiExplainLoading.value = true;
+
+    try {
+        aiExplainResponse.value = await postBinaryFeatureExplainRule(
+            {
+                config_id: activeConfig.value.id,
+                perspective: perspective.value,
+                ci_level: ciLevel.value,
+                categories: categories.value,
+                significance_values: significanceValues.value,
+                search_text: debouncedSearchText.value || null,
+                min_hit_count: debouncedMinHitCount.value,
+                min_claim_count: debouncedMinClaimCount.value,
+                row_id: focusedRow.value.row_id,
+            },
+            signal,
+        );
+    } catch (err) {
+        if (signal.aborted) {
+            return;
+        }
+
+        aiExplainError.value = err instanceof Error ? err.message : String(err);
+    } finally {
+        if (!signal.aborted) {
+            aiExplainLoading.value = false;
+        }
+    }
+}
+
 function pinFocusedRule() {
     if (!focusedRow.value) {
         return;
@@ -870,6 +935,17 @@ watch(
         void handleSelectedConfigChange(configId);
     },
     { immediate: true },
+);
+
+watch(
+    () => [
+        selectedConfigId.value,
+        focusedRowId.value,
+        responseData.value?.state_fingerprint,
+    ],
+    () => {
+        clearExplainState();
+    },
 );
 
 watch(
@@ -950,6 +1026,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
     abortController?.abort();
+    explainAbortController?.abort();
 });
 </script>
 
