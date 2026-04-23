@@ -117,6 +117,27 @@ Saved config records use the canonical shape:
   Caps displayed mortality cause buckets
 - `INSIGHT_HUB_MAX_SPLIT_GROUPS`
   Caps mortality split groups
+- `INSIGHT_HUB_LLM_BASE_URL`
+  OpenAI-compatible API root for Binary Feature AI actions
+- `INSIGHT_HUB_LLM_API_KEY`
+  Provider API key for Binary Feature AI actions
+- `INSIGHT_HUB_LLM_MODEL`
+  Provider model id for Binary Feature AI actions
+- `INSIGHT_HUB_LLM_TIMEOUT_SECONDS`
+  Optional timeout override for LLM calls
+- `INSIGHT_HUB_LLM_MAX_RETRIES`
+  Optional retry count for LLM calls
+
+For local backend startup, `./scripts/local_start.sh` automatically loads `.env`
+and then `.env.local` from the repo root if those files exist. Keep secrets in
+`.env.local`; `.env.example` shows the expected shape.
+
+For OpenAI specifically:
+
+- `INSIGHT_HUB_LLM_BASE_URL` should be `https://api.openai.com/v1`
+- working model ids for this Binary Feature explain flow include:
+  `gpt-5.4-mini`, `gpt-5-mini`, `gpt-4.1-mini`, and `gpt-5.4`
+- if you are optimizing for cost and latency, start with `gpt-5.4-mini`
 
 ## Local development
 
@@ -130,6 +151,7 @@ Backend:
 
 ```bash
 uv sync
+# Optional: cp .env.example .env.local and fill in your real LLM values
 ./scripts/local_start.sh
 ```
 

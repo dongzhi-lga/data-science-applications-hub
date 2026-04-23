@@ -4,6 +4,20 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
+load_env_file() {
+  local env_file="$1"
+  if [[ -f "$env_file" ]]; then
+    set -a
+    # shellcheck disable=SC1090
+    source "$env_file"
+    set +a
+  fi
+}
+
+# Load repo-local environment overrides for backend startup.
+load_env_file ".env"
+load_env_file ".env.local"
+
 # Keep uv's cache inside the repo so local runs don't depend on a writable
 # global cache path.
 export UV_CACHE_DIR="${UV_CACHE_DIR:-.uv-cache}"

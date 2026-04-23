@@ -55,6 +55,29 @@ def _strip_markdown_code_fences(text: str) -> str:
     return stripped.strip()
 
 
+def _extract_api_error_message(response: httpx.Response) -> str:
+    try:
+        payload = response.json()
+    except Exception:  # noqa: BLE001
+        payload = None
+
+    if isinstance(payload, dict):
+        error = payload.get("error")
+        if isinstance(error, dict):
+            message = error.get("message")
+            if isinstance(message, str) and message.strip():
+                return message.strip()
+        detail = payload.get("detail")
+        if isinstance(detail, str) and detail.strip():
+            return detail.strip()
+
+    text = response.text.strip()
+    if text:
+        return text
+
+    return f"HTTP {response.status_code}"
+
+
 def request_chat_completion_content(
     *,
     system_prompt: str,
@@ -72,6 +95,7 @@ def request_chat_completion_content(
             {"role": "user", "content": user_prompt},
         ],
         "temperature": 0.1,
+        "response_format": {"type": "json_object"},
     }
     headers = {
         "authorization": f"Bearer {llm_config.api_key}",
@@ -84,7 +108,8 @@ def request_chat_completion_content(
         try:
             with httpx.Client(timeout=llm_config.timeout_seconds) as client:
                 response = client.post(url, headers=headers, json=payload)
-                response.raise_for_status()
+                if response.is_error:
+                    raise RuntimeError(_extract_api_error_message(response))
                 content = _extract_message_content(response.json())
                 return _strip_markdown_code_fences(content)
         except Exception as exc:  # noqa: BLE001
