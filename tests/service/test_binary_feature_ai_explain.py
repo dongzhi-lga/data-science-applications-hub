@@ -13,7 +13,10 @@ from app.core.models.dataset_config import (
     ModuleId,
     PerformanceType,
 )
-from app.core.service.dataset_config import create_dataset_config, save_uploaded_file
+from app.core.service.dataset_config import (
+    create_dataset_config,
+    save_uploaded_file,
+)
 from app.modules.binary_feature_ae.models.ai import (
     ApiBinaryFeatureAiAction,
     ApiBinaryFeatureAiExplainRuleRequest,
@@ -24,12 +27,16 @@ from app.modules.binary_feature_ae.models.triage import (
     ApiBinaryFeaturePerspective,
     ApiBinaryFeatureSignificance,
 )
-from app.modules.binary_feature_ae.service import ai_explain
+from app.modules.binary_feature_ae.service import ai_orchestrator
 from app.modules.binary_feature_ae.service.ai_explain import (
-    build_binary_feature_explain_rule_packet,
     perform_binary_feature_explain_rule,
 )
-from app.modules.binary_feature_ae.service.binary_calc import calculate_binary_feature_ae
+from app.modules.binary_feature_ae.service.ai_packets import (
+    build_explain_focused_rule_packet,
+)
+from app.modules.binary_feature_ae.service.binary_calc import (
+    calculate_binary_feature_ae,
+)
 
 
 def _sample_binary_df() -> pd.DataFrame:
@@ -245,7 +252,7 @@ def _lookup_row_id(*, config_id: str, rule: str) -> str:
     return next(row.row_id for row in response.rows if row.rule == rule)
 
 
-def test_build_binary_feature_explain_rule_packet_includes_fingerprint_and_baselines(
+def test_build_explain_focused_rule_packet_includes_fingerprint_and_baselines(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setenv("INSIGHT_HUB_DATA_DIR", str(tmp_path))
@@ -266,7 +273,7 @@ def test_build_binary_feature_explain_rule_packet_includes_fingerprint_and_basel
         )
     )
 
-    packet = build_binary_feature_explain_rule_packet(
+    packet = build_explain_focused_rule_packet(
         params=ApiBinaryFeatureAiExplainRuleRequest(
             config_id=config_id,
             perspective="count",
@@ -283,7 +290,7 @@ def test_build_binary_feature_explain_rule_packet_includes_fingerprint_and_basel
     assert packet.state_fingerprint == calculate_response.state_fingerprint
     assert packet.active_filters["categories"] == ["Cancer"]
     assert packet.visible_rule_count == 2
-    assert packet.rule_row["rule"] == "R1"
+    assert packet.focused_row["rule"] == "R1"
     assert packet.baselines.impact_score_percentile > 0
 
 
@@ -334,11 +341,12 @@ def test_perform_binary_feature_explain_rule_uses_fallback_when_unconfigured(
         )
     )
 
-    assert response.action_type == ApiBinaryFeatureAiAction.EXPLAIN_RULE
+    assert response.action_type == ApiBinaryFeatureAiAction.EXPLAIN_FOCUSED_RULE
     assert response.source_mode == ApiBinaryFeatureAiSourceMode.FALLBACK
     assert response.summary_text
     assert response.key_findings
     assert response.reference_sources == []
+    assert response.validation_notes
 
 
 def test_perform_binary_feature_explain_rule_falls_back_on_bad_llm_output(
@@ -352,7 +360,7 @@ def test_perform_binary_feature_explain_rule_falls_back_on_bad_llm_output(
     row_id = _lookup_row_id(config_id=config_id, rule="R1")
 
     monkeypatch.setattr(
-        ai_explain,
+        ai_orchestrator,
         "request_chat_completion_content",
         lambda **_kwargs: '{"summary_text":"missing required fields"}',
     )
@@ -383,7 +391,7 @@ def test_perform_binary_feature_explain_rule_accepts_valid_llm_output(
     monkeypatch.setenv("INSIGHT_HUB_LLM_MODEL", "test-model")
     config_id = _create_saved_binary_config(tmp_path)
     row_id = _lookup_row_id(config_id=config_id, rule="R1")
-    packet = build_binary_feature_explain_rule_packet(
+    packet = build_explain_focused_rule_packet(
         params=ApiBinaryFeatureAiExplainRuleRequest(
             config_id=config_id,
             perspective="count",
@@ -400,15 +408,20 @@ def test_perform_binary_feature_explain_rule_accepts_valid_llm_output(
     def _mock_llm_response(**_kwargs: object) -> str:
         return json.dumps(
             {
-                "action_type": "explain_rule",
+                "action_type": "explain_focused_rule",
                 "state_fingerprint": packet.state_fingerprint,
                 "source_mode": "llm",
-                "summary_text": "The selected rule is elevated and material.",
+                "summary_text": (
+                    "The selected rule is elevated relative to expected "
+                    "and material within the visible set."
+                ),
                 "key_findings": [
-                    "Count A/E is above expected within the current filtered view."
+                    "Count A/E is above expected within the current "
+                    "filtered view."
                 ],
                 "caution_flags": [
-                    "Interpret the rule in the context of concentration by cause bucket."
+                    "Interpret the rule in the context of concentration "
+                    "by cause bucket."
                 ],
                 "next_review_steps": [
                     "Review recent claims contributing to the rule."
@@ -416,19 +429,20 @@ def test_perform_binary_feature_explain_rule_accepts_valid_llm_output(
                 "evidence_refs": [
                     {
                         "row_id": row_id,
-                        "rule_label": str(packet.rule_row["rule_label"]),
-                        "reason_type": "elevated_95",
+                        "rule_label": str(packet.focused_row["rule_label"]),
+                        "reason_type": "elevated_relative_to_expected",
                         "reason_label": "Elevated 95%",
                         "severity": "high",
                     }
                 ],
                 "used_reference_context": False,
                 "reference_sources": [],
+                "validation_notes": [],
             }
         )
 
     monkeypatch.setattr(
-        ai_explain,
+        ai_orchestrator,
         "request_chat_completion_content",
         _mock_llm_response,
     )
@@ -447,8 +461,10 @@ def test_perform_binary_feature_explain_rule_accepts_valid_llm_output(
         )
     )
 
+    assert response.action_type == ApiBinaryFeatureAiAction.EXPLAIN_FOCUSED_RULE
     assert response.source_mode == ApiBinaryFeatureAiSourceMode.LLM
     assert response.state_fingerprint == packet.state_fingerprint
     assert response.key_findings == [
         "Count A/E is above expected within the current filtered view."
     ]
+    assert response.validation_notes == []

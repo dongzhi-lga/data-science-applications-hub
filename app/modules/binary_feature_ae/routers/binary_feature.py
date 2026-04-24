@@ -10,10 +10,12 @@ from app.modules.binary_feature_ae.models.triage import (
     ApiBinaryFeatureCalculateRequest,
     ApiBinaryFeatureCalculateResponse,
 )
-from app.modules.binary_feature_ae.service.ai_explain import (
-    perform_binary_feature_explain_rule,
+from app.modules.binary_feature_ae.service.ai_orchestrator import (
+    explain_focused_rule_ai,
 )
-from app.modules.binary_feature_ae.service.binary_calc import calculate_binary_feature_ae
+from app.modules.binary_feature_ae.service.binary_calc import (
+    calculate_binary_feature_ae,
+)
 
 router = APIRouter()
 
@@ -39,6 +41,19 @@ def binary_feature_explain_rule(
     params: ApiBinaryFeatureAiExplainRuleRequest,
 ) -> ApiBinaryFeatureAiResponse:
     try:
-        return perform_binary_feature_explain_rule(params=params)
+        return explain_focused_rule_ai(params=params)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.post(
+    "/api/binary-feature-ae/ai/explain-focused-rule",
+    response_model=ApiBinaryFeatureAiResponse,
+)
+def binary_feature_explain_focused_rule(
+    params: ApiBinaryFeatureAiExplainRuleRequest,
+) -> ApiBinaryFeatureAiResponse:
+    try:
+        return explain_focused_rule_ai(params=params)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

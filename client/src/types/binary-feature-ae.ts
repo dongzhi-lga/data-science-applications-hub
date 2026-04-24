@@ -6,21 +6,23 @@ export type BinaryFeatureSignificance =
     | 'Below Expected';
 export type BinaryFeatureAiAction =
     | 'summarize_view'
+    | 'explain_focused_rule'
     | 'explain_rule'
     | 'compare_rules'
     | 'analyze_divergence';
 export type BinaryFeatureAiSourceMode = 'llm' | 'fallback';
 export type BinaryFeatureAiSeverity = 'high' | 'medium' | 'low' | 'neutral';
 export type BinaryFeatureAiReasonType =
-    | 'top_impact'
-    | 'elevated_95'
-    | 'elevated_90'
-    | 'elevated_80'
-    | 'below_expected'
-    | 'wide_uncertainty'
-    | 'dominant_cola_concentration'
+    | 'focused_rule'
+    | 'visible_pattern'
+    | 'selected_for_comparison'
     | 'count_amount_divergence'
-    | 'selected_for_comparison';
+    | 'elevated_relative_to_expected'
+    | 'below_expected'
+    | 'uncertain_interval'
+    | 'high_materiality'
+    | 'wide_uncertainty'
+    | 'reference_context_used';
 
 export interface ApiBinaryFeatureKpis {
     visible_rule_count: number;
@@ -134,4 +136,5 @@ export interface ApiBinaryFeatureAiResponse {
     evidence_refs: ApiBinaryFeatureAiEvidenceRef[];
     used_reference_context: boolean;
     reference_sources: string[];
+    validation_notes: string[];
 }

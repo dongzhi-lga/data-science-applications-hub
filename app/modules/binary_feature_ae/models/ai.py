@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class ApiBinaryFeatureAiAction(StrEnum):
     SUMMARIZE_VIEW = "summarize_view"
+    EXPLAIN_FOCUSED_RULE = "explain_focused_rule"
     EXPLAIN_RULE = "explain_rule"
     COMPARE_RULES = "compare_rules"
     ANALYZE_DIVERGENCE = "analyze_divergence"
@@ -26,15 +27,16 @@ class ApiBinaryFeatureAiSeverity(StrEnum):
 
 
 class ApiBinaryFeatureAiReasonType(StrEnum):
-    TOP_IMPACT = "top_impact"
-    ELEVATED_95 = "elevated_95"
-    ELEVATED_90 = "elevated_90"
-    ELEVATED_80 = "elevated_80"
-    BELOW_EXPECTED = "below_expected"
-    WIDE_UNCERTAINTY = "wide_uncertainty"
-    DOMINANT_COLA_CONCENTRATION = "dominant_cola_concentration"
-    COUNT_AMOUNT_DIVERGENCE = "count_amount_divergence"
+    FOCUSED_RULE = "focused_rule"
+    VISIBLE_PATTERN = "visible_pattern"
     SELECTED_FOR_COMPARISON = "selected_for_comparison"
+    COUNT_AMOUNT_DIVERGENCE = "count_amount_divergence"
+    ELEVATED_RELATIVE_TO_EXPECTED = "elevated_relative_to_expected"
+    BELOW_EXPECTED = "below_expected"
+    UNCERTAIN_INTERVAL = "uncertain_interval"
+    HIGH_MATERIALITY = "high_materiality"
+    WIDE_UNCERTAINTY = "wide_uncertainty"
+    REFERENCE_CONTEXT_USED = "reference_context_used"
 
 
 class ApiBinaryFeatureAiBaseFilters(BaseModel):
@@ -44,8 +46,10 @@ class ApiBinaryFeatureAiBaseFilters(BaseModel):
     perspective: Literal["count", "amount"] = "count"
     ci_level: Literal["95", "90", "80"] = "95"
     categories: list[str] = Field(default_factory=list)
-    significance_values: list[Literal["Elevated", "Uncertain", "Below Expected"]] = (
-        Field(default_factory=lambda: ["Elevated", "Uncertain", "Below Expected"])
+    significance_values: list[
+        Literal["Elevated", "Uncertain", "Below Expected"]
+    ] = Field(
+        default_factory=lambda: ["Elevated", "Uncertain", "Below Expected"]
     )
     search_text: str | None = None
     min_hit_count: float | None = 0
@@ -94,9 +98,12 @@ class ApiBinaryFeatureAiResponse(BaseModel):
     key_findings: list[str] = Field(default_factory=list)
     caution_flags: list[str] = Field(default_factory=list)
     next_review_steps: list[str] = Field(default_factory=list)
-    evidence_refs: list[ApiBinaryFeatureAiEvidenceRef] = Field(default_factory=list)
+    evidence_refs: list[ApiBinaryFeatureAiEvidenceRef] = Field(
+        default_factory=list
+    )
     used_reference_context: bool = False
     reference_sources: list[str] = Field(default_factory=list)
+    validation_notes: list[str] = Field(default_factory=list)
 
 
 class BinaryFeatureAiReferenceSnippet(BaseModel):
@@ -119,6 +126,18 @@ class BinaryFeatureAiRuleBaselines(BaseModel):
     low_volume_flag: bool
     high_uncertainty_flag: bool
     concentrated_cola_flag: bool
+
+
+class BinaryFeatureAiSkillDefinition(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    action_type: ApiBinaryFeatureAiAction
+    version: str
+    model_profile: str
+    temperature: float
+    response_schema: str
+    body: str
 
 
 class BinaryFeatureAiPacketBase(BaseModel):
@@ -146,10 +165,10 @@ class BinaryFeatureAiSummarizeViewPacket(BinaryFeatureAiPacketBase):
     top_rows: list[dict[str, object]]
 
 
-class BinaryFeatureAiExplainRulePacket(BinaryFeatureAiPacketBase):
+class BinaryFeatureAiExplainFocusedRulePacket(BinaryFeatureAiPacketBase):
     model_config = ConfigDict(extra="forbid")
 
-    rule_row: dict[str, object]
+    focused_row: dict[str, object]
     baselines: BinaryFeatureAiRuleBaselines
     visible_rule_count: int
 
@@ -166,3 +185,6 @@ class BinaryFeatureAiAnalyzeDivergencePacket(BinaryFeatureAiPacketBase):
     count_row: dict[str, object]
     amount_row: dict[str, object]
     divergence_metrics: dict[str, object]
+
+
+BinaryFeatureAiExplainRulePacket = BinaryFeatureAiExplainFocusedRulePacket
