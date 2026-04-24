@@ -249,7 +249,7 @@ def fallback_explain_focused_rule(
     if baselines.concentrated_cola_flag:
         caution_flags.append(
             f"The signal is concentrated in {focused_row['dominant_cola']}, "
-            "so one claim family may explain much of the visible pattern."
+            "so one claim family may represent much of the visible pattern."
         )
 
     significance_class = str(focused_row.get("significance_class", ""))
