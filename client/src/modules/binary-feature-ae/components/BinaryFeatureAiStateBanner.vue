@@ -1,140 +1,61 @@
 <template>
-    <div v-if="hasBanners" class="q-mb-md">
+    <div
+        v-if="isStale || sourceMode === 'fallback' || usedReferenceContext"
+        class="q-mb-sm"
+    >
         <q-banner
             v-if="isStale"
+            class="bg-amber-1 text-amber-10 q-mb-sm"
             rounded
             dense
-            class="ai-state-banner ai-state-banner--stale q-mb-sm"
         >
             <template #avatar>
-                <q-icon name="warning" />
+                <q-icon name="update" color="amber-10" />
             </template>
-            This explanation is stale. The visible view or focused rule changed after
-            the AI response was generated.
+            This AI response may be stale because the current view changed after it was generated.
+            Re-run the AI action for the latest filters, perspective, or selected rule.
         </q-banner>
 
         <q-banner
-            v-if="isFallback"
+            v-if="sourceMode === 'fallback'"
+            class="bg-orange-1 text-orange-10 q-mb-sm"
             rounded
             dense
-            class="ai-state-banner ai-state-banner--fallback q-mb-sm"
         >
             <template #avatar>
-                <q-icon name="shield" />
+                <q-icon name="shield" color="orange-10" />
             </template>
-            Deterministic fallback response shown.
+            Deterministic fallback explanation shown. This response uses uploaded rule metrics and current view state only.
+            <div v-if="validationNotes.length" class="text-caption q-mt-xs">
+                {{ validationNotes[0] }}
+            </div>
         </q-banner>
 
         <q-banner
-            v-if="!usedReferenceContext"
+            v-if="usedReferenceContext"
+            class="bg-blue-1 text-blue-10 q-mb-sm"
             rounded
             dense
-            class="ai-state-banner ai-state-banner--info q-mb-sm"
         >
             <template #avatar>
-                <q-icon name="info" />
+                <q-icon name="menu_book" color="blue-10" />
             </template>
-            No optional reference context was attached to this explanation.
-        </q-banner>
-
-        <q-banner
-            v-if="showReferenceSources"
-            rounded
-            dense
-            class="ai-state-banner ai-state-banner--reference q-mb-sm"
-        >
-            <template #avatar>
-                <q-icon name="library_books" />
-            </template>
-            Reference context used: {{ referenceSources.join(', ') }}
-        </q-banner>
-
-        <q-banner
-            v-if="validationNotes.length"
-            rounded
-            dense
-            class="ai-state-banner ai-state-banner--validation"
-        >
-            <template #avatar>
-                <q-icon name="fact_check" />
-            </template>
-            <div class="text-weight-medium">Validation Notes</div>
-            <ul class="ai-state-banner__list">
-                <li v-for="note in validationNotes" :key="note">
-                    {{ note }}
-                </li>
-            </ul>
+            Reference context was used to help explain rule meaning.
+            <span v-if="referenceSources.length">
+                Sources: {{ referenceSources.join(', ') }}
+            </span>
         </q-banner>
     </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import type { BinaryFeatureAiSourceMode } from '@/types/binary-feature-ae';
 
-const props = defineProps<{
+defineProps<{
     isStale: boolean;
-    isFallback: boolean;
+    sourceMode: BinaryFeatureAiSourceMode | null;
     usedReferenceContext: boolean;
     referenceSources: string[];
     validationNotes: string[];
 }>();
-
-const showReferenceSources = computed(
-    () => props.usedReferenceContext && props.referenceSources.length > 0,
-);
-
-const hasBanners = computed(() => {
-    return (
-        props.isStale ||
-        props.isFallback ||
-        !props.usedReferenceContext ||
-        showReferenceSources.value ||
-        props.validationNotes.length > 0
-    );
-});
 </script>
-
-<style scoped>
-.ai-state-banner {
-    border: 1px solid transparent;
-}
-
-.ai-state-banner--stale {
-    background: #fff3cd;
-    border-color: #f2c46d;
-    color: #6c4c00;
-}
-
-.ai-state-banner--fallback {
-    background: #fdeaea;
-    border-color: #f1b7bf;
-    color: #8a0013;
-}
-
-.ai-state-banner--info {
-    background: #f5f6f7;
-    border-color: #d6d9dd;
-    color: #4f5b66;
-}
-
-.ai-state-banner--reference {
-    background: #ecf8f3;
-    border-color: #9dd3b5;
-    color: #136642;
-}
-
-.ai-state-banner--validation {
-    background: #eef6ff;
-    border-color: #9fc3e7;
-    color: #164b7a;
-}
-
-.ai-state-banner__list {
-    margin: 6px 0 0;
-    padding-left: 18px;
-}
-
-.ai-state-banner__list li + li {
-    margin-top: 4px;
-}
-</style>

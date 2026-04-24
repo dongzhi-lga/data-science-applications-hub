@@ -408,7 +408,7 @@
                         <BinaryFeatureAiPanel
                             class="q-mt-md"
                             :focused-row="focusedRow"
-                            :is-stale="isAiExplainStale || isAiExplainFocusedRowStale"
+                            :is-stale="isAiExplainStale"
                             :result="aiExplainResponse"
                             :loading="aiExplainLoading"
                             :error="aiExplainError"
@@ -587,7 +587,6 @@ const activeDatasetName = ref<string | null>(null);
 const aiExplainLoading = ref(false);
 const aiExplainError = ref<string | null>(null);
 const aiExplainResponse = ref<ApiBinaryFeatureAiResponse | null>(null);
-const lastExplainedRowId = ref<string | null>(null);
 
 const categories = ref<string[]>([]);
 const significanceValues = ref<BinaryFeatureSignificance[]>([...SIGNIFICANCE_OPTIONS]);
@@ -695,20 +694,12 @@ const focusedRow = computed(() => {
     return rows.value.find((row) => row.row_id === focusedRowId.value) ?? null;
 });
 
-const isAiExplainFocusedRowStale = computed(() => {
-    if (!aiExplainResponse.value || !lastExplainedRowId.value) {
-        return false;
-    }
-
-    return focusedRowId.value !== lastExplainedRowId.value;
-});
-
 const isAiExplainStale = computed(() => {
     if (!aiExplainResponse.value || !responseData.value) {
         return false;
     }
 
-    // Assumes AI state_fingerprint matches the calculate response visible-view fingerprint.
+    // Frontend stale detection treats state_fingerprint as the visible-view fingerprint.
     return aiExplainResponse.value.state_fingerprint !== responseData.value.state_fingerprint;
 });
 
@@ -792,7 +783,6 @@ function clearExplainState() {
     aiExplainLoading.value = false;
     aiExplainError.value = null;
     aiExplainResponse.value = null;
-    lastExplainedRowId.value = null;
 }
 
 async function ensureBinaryFeatureConfig(configId: string) {
@@ -914,7 +904,6 @@ async function onExplainRule() {
             },
             signal,
         );
-        lastExplainedRowId.value = explainedRowId;
     } catch (err) {
         if (signal.aborted) {
             return;
@@ -962,6 +951,13 @@ watch(
         selectedConfigId.value = configId;
     },
     { immediate: true },
+);
+
+watch(
+    () => [selectedConfigId.value, focusedRowId.value],
+    () => {
+        clearExplainState();
+    },
 );
 
 watch(

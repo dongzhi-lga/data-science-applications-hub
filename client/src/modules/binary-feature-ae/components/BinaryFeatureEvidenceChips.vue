@@ -1,32 +1,32 @@
 <template>
     <div v-if="evidenceRefs.length">
-        <div class="text-subtitle2 q-mb-sm">Evidence</div>
-        <div class="row q-col-gutter-sm q-row-gutter-sm">
-            <div
+        <div class="text-subtitle2 q-mb-xs">Evidence</div>
+        <div class="row q-gutter-xs">
+            <q-chip
                 v-for="evidence in evidenceRefs"
                 :key="`${evidence.row_id}-${evidence.reason_type}-${evidence.reason_label}`"
-                class="col-auto"
+                clickable
+                outline
+                dense
+                :color="severityColor(evidence.severity)"
+                :icon="reasonIcon(evidence.reason_type)"
+                @click="emit('focus-row', evidence.row_id)"
             >
-                <q-chip
-                    clickable
-                    dense
-                    class="evidence-chip"
-                    :class="`evidence-chip--${evidence.severity}`"
-                    @click="emit('focus-row', evidence.row_id)"
-                >
-                    {{ evidence.reason_label }}
-                    <q-tooltip class="bg-grey-9 text-body2">
-                        <div class="text-weight-medium">{{ evidence.rule_label }}</div>
-                        <div class="text-caption">{{ evidence.reason_type }}</div>
-                    </q-tooltip>
-                </q-chip>
-            </div>
+                {{ evidence.reason_label }}
+                <q-tooltip>
+                    {{ evidence.rule_label }}
+                </q-tooltip>
+            </q-chip>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import type { ApiBinaryFeatureAiEvidenceRef } from '@/types/binary-feature-ae';
+import type {
+    ApiBinaryFeatureAiEvidenceRef,
+    BinaryFeatureAiReasonType,
+    BinaryFeatureAiSeverity,
+} from '@/types/binary-feature-ae';
 
 defineProps<{
     evidenceRefs: ApiBinaryFeatureAiEvidenceRef[];
@@ -35,35 +35,43 @@ defineProps<{
 const emit = defineEmits<{
     'focus-row': [rowId: string];
 }>();
+
+function severityColor(severity: BinaryFeatureAiSeverity) {
+    switch (severity) {
+        case 'high':
+            return 'negative';
+        case 'medium':
+            return 'orange-8';
+        case 'low':
+            return 'blue-grey-6';
+        case 'neutral':
+        default:
+            return 'grey-7';
+    }
+}
+
+function reasonIcon(reasonType: BinaryFeatureAiReasonType) {
+    switch (reasonType) {
+        case 'elevated_relative_to_expected':
+            return 'trending_up';
+        case 'below_expected':
+            return 'trending_down';
+        case 'uncertain_interval':
+        case 'wide_uncertainty':
+            return 'error_outline';
+        case 'high_materiality':
+            return 'priority_high';
+        case 'count_amount_divergence':
+            return 'compare_arrows';
+        case 'reference_context_used':
+            return 'menu_book';
+        case 'selected_for_comparison':
+            return 'checklist';
+        case 'visible_pattern':
+            return 'visibility';
+        case 'focused_rule':
+        default:
+            return 'gps_fixed';
+    }
+}
 </script>
-
-<style scoped>
-.evidence-chip {
-    border: 1px solid transparent;
-    font-weight: 600;
-}
-
-.evidence-chip--high {
-    background: #fdeaea;
-    border-color: #f1b7bf;
-    color: #8a0013;
-}
-
-.evidence-chip--medium {
-    background: #fff4dd;
-    border-color: #f2c46d;
-    color: #8a5400;
-}
-
-.evidence-chip--low {
-    background: #ecf5ff;
-    border-color: #8eb7e0;
-    color: #135487;
-}
-
-.evidence-chip--neutral {
-    background: #f1f3f5;
-    border-color: #cfd4da;
-    color: #495057;
-}
-</style>

@@ -36,7 +36,7 @@
 
             <BinaryFeatureAiStateBanner
                 :is-stale="isStale"
-                :is-fallback="result.source_mode === 'fallback'"
+                :source-mode="result.source_mode"
                 :used-reference-context="result.used_reference_context"
                 :reference-sources="result.reference_sources"
                 :validation-notes="result.validation_notes"
