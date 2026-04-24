@@ -48,7 +48,9 @@ PERSPECTIVE_CONFIGS: dict[str, dict[str, object]] = {
             "80": ("ci_lower_80_count", "ci_upper_80_count"),
         },
         "cola_cols": [f"{base}_count" for base, _ in COLA_DEFINITIONS],
-        "dominant_labels": {f"{base}_count": label for base, label in COLA_DEFINITIONS},
+        "dominant_labels": {
+            f"{base}_count": label for base, label in COLA_DEFINITIONS
+        },
         "scale_col": "hit_count",
         "sort_cols": ["claim_count", "hit_count"],
     },
@@ -60,7 +62,9 @@ PERSPECTIVE_CONFIGS: dict[str, dict[str, object]] = {
             "80": ("ci_lower_80_amount", "ci_upper_80_amount"),
         },
         "cola_cols": [f"{base}_amount" for base, _ in COLA_DEFINITIONS],
-        "dominant_labels": {f"{base}_amount": label for base, label in COLA_DEFINITIONS},
+        "dominant_labels": {
+            f"{base}_amount": label for base, label in COLA_DEFINITIONS
+        },
         "scale_col": "claim_amount",
         "sort_cols": ["claim_amount", "claim_count"],
     },
@@ -92,12 +96,11 @@ def _rule_key_for(rule: str, first_date: str) -> str:
 def _build_required_label_map() -> dict[str, str]:
     labels = dict(SHARED_FIELD_LABELS)
     for base, _ in COLA_DEFINITIONS:
-        labels[f"{base}_count"] = (
-            f"{base.replace('cola_non_natural_pct', 'cola_non-natural_pct')}_count"
+        label_base = base.replace(
+            "cola_non_natural_pct", "cola_non-natural_pct"
         )
-        labels[f"{base}_amount"] = (
-            f"{base.replace('cola_non_natural_pct', 'cola_non-natural_pct')}_amount"
-        )
+        labels[f"{base}_count"] = f"{label_base}_count"
+        labels[f"{base}_amount"] = f"{label_base}_amount"
     return labels
 
 
@@ -139,7 +142,9 @@ def _project_perspective(
     for level, (lo_col, hi_col) in ci_cols.items():
         dff[f"ci_lower_{level}"] = dff[lo_col]
         dff[f"ci_upper_{level}"] = dff[hi_col]
-        dff[f"significance_class_{level}"] = dff[f"significance_class_{level}_{perspective}"]
+        dff[f"significance_class_{level}"] = dff[
+            f"significance_class_{level}_{perspective}"
+        ]
 
     active_ci_lower, active_ci_upper = ci_cols[ci_level]
     dff["significance_class"] = dff[f"significance_class_{ci_level}"]
@@ -167,6 +172,25 @@ def _sort_rows(df: pd.DataFrame, *, perspective: str) -> pd.DataFrame:
     return df.sort_values(sort_cols, ascending=ascending).reset_index(drop=True)
 
 
+def project_binary_feature_perspective(
+    df: pd.DataFrame,
+    *,
+    perspective: str,
+    ci_level: str,
+) -> pd.DataFrame:
+    return _project_perspective(
+        df,
+        perspective=perspective,
+        ci_level=ci_level,
+    )
+
+
+def sort_binary_feature_rows(
+    df: pd.DataFrame, *, perspective: str
+) -> pd.DataFrame:
+    return _sort_rows(df, perspective=perspective)
+
+
 def prepare_rule_df(df: pd.DataFrame) -> pd.DataFrame:
     missing = [column for column in REQUIRED_COLS if column not in df.columns]
     if missing:
@@ -180,7 +204,9 @@ def prepare_rule_df(df: pd.DataFrame) -> pd.DataFrame:
     dff["category"] = dff["category"].fillna("Uncategorized").astype(str)
     dff["rule_key"] = [
         _rule_key_for(rule=rule, first_date=first_date)
-        for rule, first_date in zip(dff["rule"], dff["first_date"], strict=False)
+        for rule, first_date in zip(
+            dff["rule"], dff["first_date"], strict=False
+        )
     ]
     dff["row_id"] = dff["rule_key"]
     dff["rule_label"] = dff["rule"] + " | " + dff["RuleName"]
@@ -212,13 +238,16 @@ def prepare_rule_df(df: pd.DataFrame) -> pd.DataFrame:
             )
 
         dff[f"ae_gap_{perspective_name}"] = dff[ae_ratio_col] - 1.0
-        dff[f"abs_ae_gap_{perspective_name}"] = dff[f"ae_gap_{perspective_name}"].abs()
+        dff[f"abs_ae_gap_{perspective_name}"] = dff[
+            f"ae_gap_{perspective_name}"
+        ].abs()
         dff[f"ci_width_{perspective_name}"] = (
             dff[ci_cols["95"][1]] - dff[ci_cols["95"][0]]
         )
-        dff[f"impact_score_{perspective_name}"] = np.log1p(
-            dff[scale_col].clip(lower=0)
-        ) * dff[f"abs_ae_gap_{perspective_name}"]
+        dff[f"impact_score_{perspective_name}"] = (
+            np.log1p(dff[scale_col].clip(lower=0))
+            * dff[f"abs_ae_gap_{perspective_name}"]
+        )
 
         if dff.empty:
             dff[f"dominant_cola_{perspective_name}"] = ""
@@ -228,9 +257,9 @@ def prepare_rule_df(df: pd.DataFrame) -> pd.DataFrame:
             dff[f"dominant_cola_{perspective_name}"] = [
                 dominant_labels[cola_cols[idx]] for idx in dominant_idx
             ]
-            dff[f"dominant_cola_pct_{perspective_name}"] = dff[display_cola_cols].max(
-                axis=1
-            )
+            dff[f"dominant_cola_pct_{perspective_name}"] = dff[
+                display_cola_cols
+            ].max(axis=1)
 
         dff[f"confidence_band_{perspective_name}"] = pd.Categorical(
             np.select(
@@ -291,18 +320,31 @@ def apply_filters(
     return dff.reset_index(drop=True)
 
 
-def _load_prepared_df_from_config(*, config_id: str) -> tuple[str, pd.DataFrame]:
+def _load_prepared_df_from_config(
+    *, config_id: str
+) -> tuple[str, pd.DataFrame]:
     config, file_path = get_dataset_config_with_file(config_id)
     module_config = get_binary_feature_module_config(config)
     mapping = module_config.model_dump()
     source_columns = list(mapping.values())
     if len(set(source_columns)) != len(source_columns):
-        raise ValueError("Binary Feature module_config contains duplicate column mappings")
+        raise ValueError(
+            "Binary Feature module_config contains duplicate column mappings"
+        )
 
     df = read_dataframe_from_path(file_path=file_path, columns=source_columns)
-    renamed = df.rename(columns={source: target for target, source in mapping.items()})
+    renamed = df.rename(
+        columns={source: target for target, source in mapping.items()}
+    )
     prepared = prepare_rule_df(renamed)
     return config.dataset_name, prepared
+
+
+def load_prepared_binary_feature_df_from_config(
+    *,
+    config_id: str,
+) -> tuple[str, pd.DataFrame]:
+    return _load_prepared_df_from_config(config_id=config_id)
 
 
 def _build_kpis(df: pd.DataFrame) -> ApiBinaryFeatureKpis:
@@ -326,8 +368,14 @@ def _build_kpis(df: pd.DataFrame) -> ApiBinaryFeatureKpis:
         median_ae=float(df["ae_ratio"].median()),
         elevated_count=int((df["significance_class"] == "Elevated").sum()),
         uncertain_count=int((df["significance_class"] == "Uncertain").sum()),
-        below_expected_count=int((df["significance_class"] == "Below Expected").sum()),
+        below_expected_count=int(
+            (df["significance_class"] == "Below Expected").sum()
+        ),
     )
+
+
+def build_binary_feature_kpis(df: pd.DataFrame) -> ApiBinaryFeatureKpis:
+    return _build_kpis(df)
 
 
 def _serialize_value(value: object) -> object:

@@ -412,7 +412,7 @@
                             :result="aiExplainResponse"
                             :loading="aiExplainLoading"
                             :error="aiExplainError"
-                            @explain="onExplainRule"
+                            @explain="explainFocusedRule"
                             @focus-row="focusEvidenceRow"
                         />
 
@@ -534,7 +534,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch, type Ref } from 'vue';
 import { useRoute } from 'vue-router';
 
 import {
@@ -543,13 +543,11 @@ import {
 } from '@/core/api/dataset-configs';
 import BinaryFeatureAiPanel from '@/modules/binary-feature-ae/components/BinaryFeatureAiPanel.vue';
 import BinaryFeatureCompareCharts from '@/modules/binary-feature-ae/components/BinaryFeatureCompareCharts.vue';
-import {
-    postBinaryFeatureAiExplainFocusedRule,
-    postBinaryFeatureCalculate,
-} from '@/modules/binary-feature-ae/api';
+import { postBinaryFeatureCalculate } from '@/modules/binary-feature-ae/api';
 import BinaryFeatureDetailCards from '@/modules/binary-feature-ae/components/BinaryFeatureDetailCards.vue';
 import BinaryFeatureGrid from '@/modules/binary-feature-ae/components/BinaryFeatureGrid.vue';
 import BinaryFeatureScatterPlot from '@/modules/binary-feature-ae/components/BinaryFeatureScatterPlot.vue';
+import { useBinaryFeatureAi } from '@/modules/binary-feature-ae/composables/useBinaryFeatureAi';
 import {
     BINARY_FEATURE_PERFORMANCE_TYPE,
     CI_LEVEL_OPTIONS,
@@ -558,7 +556,6 @@ import {
     SIGNIFICANCE_OPTIONS,
 } from '@/modules/binary-feature-ae/constants';
 import type {
-    ApiBinaryFeatureAiResponse,
     ApiBinaryFeatureCalculateResponse,
     ApiBinaryFeatureRow,
     BinaryFeatureCiLevel,
@@ -584,9 +581,6 @@ const loading = ref(false);
 const errorMsg = ref<string | null>(null);
 const responseData = ref<ApiBinaryFeatureCalculateResponse | null>(null);
 const activeDatasetName = ref<string | null>(null);
-const aiExplainLoading = ref(false);
-const aiExplainError = ref<string | null>(null);
-const aiExplainResponse = ref<ApiBinaryFeatureAiResponse | null>(null);
 
 const categories = ref<string[]>([]);
 const significanceValues = ref<BinaryFeatureSignificance[]>([...SIGNIFICANCE_OPTIONS]);
@@ -615,7 +609,6 @@ const pinnedRuleKeys = ref<string[]>([]);
 
 const activeConfig = ref<ApiDatasetConfig | null>(null);
 let abortController: AbortController | null = null;
-let explainAbortController: AbortController | null = null;
 let configSelectionRequestId = 0;
 
 const routeConfigId = computed(() => {
@@ -694,14 +687,7 @@ const focusedRow = computed(() => {
     return rows.value.find((row) => row.row_id === focusedRowId.value) ?? null;
 });
 
-const isAiExplainStale = computed(() => {
-    if (!aiExplainResponse.value || !responseData.value) {
-        return false;
-    }
-
-    // Frontend stale detection treats state_fingerprint as the visible-view fingerprint.
-    return aiExplainResponse.value.state_fingerprint !== responseData.value.state_fingerprint;
-});
+const responseStateFingerprint = computed(() => responseData.value?.state_fingerprint);
 
 const selectedRows = computed(() => {
     return rows.value.filter((row) => selectedRowIds.value.includes(row.row_id));
@@ -723,8 +709,8 @@ const activeClaimMetricLabel = computed(() => {
         : 'Median Claim Amount';
 });
 
-function useDebouncedRef<T>(source: { value: T }, delayMs: number) {
-    const debounced = ref(source.value) as { value: T };
+function useDebouncedRef<T>(source: Ref<T>, delayMs: number): Ref<T> {
+    const debounced = ref(source.value) as Ref<T>;
     let timer: number | null = null;
 
     watch(
@@ -753,6 +739,26 @@ const debouncedSearchText = useDebouncedRef(searchText, 250);
 const debouncedMinHitCount = useDebouncedRef(minHitCount, 250);
 const debouncedMinClaimCount = useDebouncedRef(minClaimCount, 250);
 
+const {
+    aiExplainLoading,
+    aiExplainError,
+    aiExplainResponse,
+    isAiExplainStale,
+    clearExplainState,
+    explainFocusedRule,
+} = useBinaryFeatureAi({
+    activeConfig,
+    focusedRow,
+    responseStateFingerprint,
+    perspective,
+    ciLevel,
+    categories,
+    significanceValues,
+    searchText: debouncedSearchText,
+    minHitCount: debouncedMinHitCount,
+    minClaimCount: debouncedMinClaimCount,
+});
+
 function resetDatasetState() {
     abortController?.abort();
     abortController = null;
@@ -775,14 +781,6 @@ function resetDatasetState() {
     selectedRowIds.value = [];
     focusedRowId.value = null;
     pinnedRuleKeys.value = [];
-}
-
-function clearExplainState() {
-    explainAbortController?.abort();
-    explainAbortController = null;
-    aiExplainLoading.value = false;
-    aiExplainError.value = null;
-    aiExplainResponse.value = null;
 }
 
 async function ensureBinaryFeatureConfig(configId: string) {
@@ -874,49 +872,6 @@ async function loadData() {
     } finally {
         if (!signal.aborted) {
             loading.value = false;
-        }
-    }
-}
-
-async function onExplainRule() {
-    if (!activeConfig.value || !focusedRow.value) {
-        return;
-    }
-
-    const explainedRowId = focusedRow.value.row_id;
-    clearExplainState();
-    explainAbortController = new AbortController();
-    const signal = explainAbortController.signal;
-    aiExplainLoading.value = true;
-
-    try {
-        aiExplainResponse.value = await postBinaryFeatureAiExplainFocusedRule(
-            {
-                config_id: activeConfig.value.id,
-                perspective: perspective.value,
-                ci_level: ciLevel.value,
-                categories: categories.value,
-                significance_values: significanceValues.value,
-                search_text: debouncedSearchText.value || null,
-                min_hit_count: debouncedMinHitCount.value,
-                min_claim_count: debouncedMinClaimCount.value,
-                row_id: explainedRowId,
-            },
-            signal,
-        );
-    } catch (err) {
-        if (signal.aborted) {
-            return;
-        }
-
-        const message = err instanceof Error ? err.message : String(err);
-        aiExplainError.value =
-            message === 'Not Found'
-                ? 'Explain Focused Rule endpoint was not found on the backend. Restart the FastAPI server on port 8000 so it loads the /api/binary-feature-ae/ai/explain-focused-rule route.'
-                : message;
-    } finally {
-        if (!signal.aborted) {
-            aiExplainLoading.value = false;
         }
     }
 }
@@ -1046,7 +1001,6 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
     abortController?.abort();
-    explainAbortController?.abort();
 });
 </script>
 

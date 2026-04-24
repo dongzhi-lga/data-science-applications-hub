@@ -9,11 +9,11 @@ import pandas as pd
 
 from app.modules.binary_feature_ae.models.triage import ApiBinaryFeatureKpis
 from app.modules.binary_feature_ae.service.binary_calc import (
-    _build_kpis,
-    _load_prepared_df_from_config,
-    _project_perspective,
-    _sort_rows,
     apply_filters,
+    build_binary_feature_kpis,
+    load_prepared_binary_feature_df_from_config,
+    project_binary_feature_perspective,
+    sort_binary_feature_rows,
 )
 
 
@@ -82,15 +82,21 @@ def build_view_fingerprint(
         "min_claim_count": _normalize_float(min_claim_count),
         "visible_row_ids": visible_row_ids,
     }
-    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode(
+        "utf-8"
+    )
     return hashlib.sha256(encoded).hexdigest()[:16]
 
 
 def build_binary_feature_view_state(
     params: BinaryFeatureViewParams,
 ) -> BinaryFeatureViewState:
-    dataset_name, base_df = _load_prepared_df_from_config(config_id=params.config_id)
-    available_categories = sorted(base_df["category"].dropna().unique().tolist())
+    dataset_name, base_df = load_prepared_binary_feature_df_from_config(
+        config_id=params.config_id
+    )
+    available_categories = sorted(
+        base_df["category"].dropna().unique().tolist()
+    )
 
     perspective = _enum_value(params.perspective)
     ci_level = _enum_value(params.ci_level)
@@ -98,7 +104,7 @@ def build_binary_feature_view_state(
         _enum_value(value) for value in params.significance_values
     ]
 
-    projected_df = _project_perspective(
+    projected_df = project_binary_feature_perspective(
         base_df,
         perspective=perspective,
         ci_level=ci_level,
@@ -111,7 +117,10 @@ def build_binary_feature_view_state(
         min_hit_count=params.min_hit_count,
         min_claim_count=params.min_claim_count,
     )
-    filtered_sorted_df = _sort_rows(filtered_df, perspective=perspective)
+    filtered_sorted_df = sort_binary_feature_rows(
+        filtered_df,
+        perspective=perspective,
+    )
     filtered_sorted_df["confidence_band"] = filtered_sorted_df[
         "confidence_band"
     ].astype(str)
@@ -140,5 +149,5 @@ def build_binary_feature_view_state(
         filtered_sorted_df=filtered_sorted_df,
         available_categories=available_categories,
         view_fingerprint=view_fingerprint,
-        kpis=_build_kpis(filtered_sorted_df),
+        kpis=build_binary_feature_kpis(filtered_sorted_df),
     )
