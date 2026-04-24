@@ -1,5 +1,6 @@
 import { postJson } from '@/core/http';
 import type {
+    ApiBinaryFeatureAiExplainFocusedRuleRequest,
     ApiBinaryFeatureAiExplainRuleRequest,
     ApiBinaryFeatureAiResponse,
     ApiBinaryFeatureCalculateRequest,
@@ -17,13 +18,20 @@ export async function postBinaryFeatureCalculate(
     );
 }
 
+export async function postBinaryFeatureAiExplainFocusedRule(
+    params: ApiBinaryFeatureAiExplainFocusedRuleRequest,
+    signal?: AbortSignal,
+): Promise<ApiBinaryFeatureAiResponse> {
+    return postJson<ApiBinaryFeatureAiResponse>(
+        '/api/binary-feature-ae/ai/explain-focused-rule',
+        params,
+        signal,
+    );
+}
+
 export async function postBinaryFeatureExplainRule(
     params: ApiBinaryFeatureAiExplainRuleRequest,
     signal?: AbortSignal,
 ): Promise<ApiBinaryFeatureAiResponse> {
-    return postJson<ApiBinaryFeatureAiResponse>(
-        '/api/binary-feature-ae/ai/explain-rule',
-        params,
-        signal,
-    );
+    return postBinaryFeatureAiExplainFocusedRule(params, signal);
 }

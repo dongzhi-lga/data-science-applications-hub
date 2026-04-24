@@ -95,6 +95,10 @@ Saved config records use the canonical shape:
 - `POST /api/ae/univariate-from-csv`
 - `POST /api/ae/insights/from-config`
 - `POST /api/binary-feature-ae/calculate`
+- `POST /api/binary-feature-ae/ai/explain-focused-rule`
+  Preferred Binary Feature AI focused-rule explanation route
+- `POST /api/binary-feature-ae/ai/explain-rule`
+  Legacy alias for Binary Feature AI focused-rule explanations
 
 ## Supported file formats
 

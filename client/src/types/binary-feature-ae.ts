@@ -125,6 +125,9 @@ export interface ApiBinaryFeatureAiExplainRuleRequest {
     row_id: string;
 }
 
+export type ApiBinaryFeatureAiExplainFocusedRuleRequest =
+    ApiBinaryFeatureAiExplainRuleRequest;
+
 export interface ApiBinaryFeatureAiResponse {
     action_type: BinaryFeatureAiAction;
     state_fingerprint: string;

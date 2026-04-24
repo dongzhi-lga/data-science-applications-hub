@@ -544,8 +544,8 @@ import {
 import BinaryFeatureAiPanel from '@/modules/binary-feature-ae/components/BinaryFeatureAiPanel.vue';
 import BinaryFeatureCompareCharts from '@/modules/binary-feature-ae/components/BinaryFeatureCompareCharts.vue';
 import {
+    postBinaryFeatureAiExplainFocusedRule,
     postBinaryFeatureCalculate,
-    postBinaryFeatureExplainRule,
 } from '@/modules/binary-feature-ae/api';
 import BinaryFeatureDetailCards from '@/modules/binary-feature-ae/components/BinaryFeatureDetailCards.vue';
 import BinaryFeatureGrid from '@/modules/binary-feature-ae/components/BinaryFeatureGrid.vue';
@@ -890,7 +890,7 @@ async function onExplainRule() {
     aiExplainLoading.value = true;
 
     try {
-        aiExplainResponse.value = await postBinaryFeatureExplainRule(
+        aiExplainResponse.value = await postBinaryFeatureAiExplainFocusedRule(
             {
                 config_id: activeConfig.value.id,
                 perspective: perspective.value,
@@ -912,7 +912,7 @@ async function onExplainRule() {
         const message = err instanceof Error ? err.message : String(err);
         aiExplainError.value =
             message === 'Not Found'
-                ? 'Explain Rule endpoint was not found on the backend. Restart the FastAPI server on port 8000 so it loads the new /api/binary-feature-ae/ai/explain-rule route.'
+                ? 'Explain Focused Rule endpoint was not found on the backend. Restart the FastAPI server on port 8000 so it loads the /api/binary-feature-ae/ai/explain-focused-rule route.'
                 : message;
     } finally {
         if (!signal.aborted) {

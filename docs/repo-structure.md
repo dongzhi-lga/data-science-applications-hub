@@ -73,10 +73,32 @@ Binary Feature module ownership.
 
 - `models/triage.py`
   Binary Feature request/response contracts
+- `models/ai.py`
+  Binary Feature AI action, packet, evidence, and response contracts
 - `service/binary_calc.py`
   Binary Feature filtering, scoring, and response shaping
+- `service/view_state.py`
+  Deterministic visible-view state used by calculation and AI packets
+- `service/ai_orchestrator.py`
+  Binary Feature AI orchestration with validation and deterministic fallback
+- `service/ai_packets.py`
+  AI context packet builders sourced from deterministic view state
+- `service/ai_skill_loader.py`
+  Module skill registry and skill frontmatter validation
+- `service/ai_skill_renderer.py`
+  Skill prompt rendering with immutable context packets
+- `service/ai_validation.py`
+  Binary Feature-specific structured AI response validation
+- `service/ai_fallbacks.py`
+  Deterministic fallback responses for AI actions
+- `service/ai_baselines.py`
+  Rule baseline metrics used by AI packets and fallback explanations
+- `service/ai_explain.py`
+  Legacy compatibility wrapper for the focused-rule explain flow
 - `routers/binary_feature.py`
-  Binary Feature API route
+  Binary Feature calculate and AI API routes
+- `skills/explain_focused_rule.md`
+  Skill instructions for the currently enabled AI action
 
 ## Frontend ownership
 
@@ -119,11 +141,17 @@ Binary Feature module ownership.
 - `definition.ts`
   Binary Feature setup state, validation, and config creation contract
 - `api.ts`
-  Binary Feature analysis request client
+  Binary Feature analysis and AI request client
 - `pages/`
   Binary Feature analysis page
 - `components/`
   Binary Feature visual and triage UI
+- `components/BinaryFeatureAiPanel.vue`
+  Focused-rule AI explanation panel
+- `components/BinaryFeatureAiStateBanner.vue`
+  AI source, fallback, stale-state, and validation banner
+- `components/BinaryFeatureEvidenceChips.vue`
+  Clickable AI evidence references back to visible table rows
 - `constants.ts`
   Binary Feature display and mapping constants
 
